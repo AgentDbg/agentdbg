@@ -1,13 +1,13 @@
 """
 Shared pytest fixtures and helpers for AgentDbg tests.
 """
+
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from agentdbg.config import load_config
 from agentdbg.storage import list_runs
 
 

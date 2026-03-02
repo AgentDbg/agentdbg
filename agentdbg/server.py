@@ -5,6 +5,7 @@ Serves GET /api/runs, GET /api/runs/{run_id}, GET /api/runs/{run_id}/events,
 and GET / with static index.html. No CORS by default.
 Config is loaded once at app creation and cached on app.state.
 """
+
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -38,7 +39,9 @@ def create_app() -> FastAPI:
         return {"spec_version": SPEC_VERSION, "runs": runs}
 
     @app.get("/api/runs/{run_id}")
-    def get_run_meta(run_id: str, config: AgentDbgConfig = Depends(_get_config)) -> dict:
+    def get_run_meta(
+        run_id: str, config: AgentDbgConfig = Depends(_get_config)
+    ) -> dict:
         """Return run.json metadata for the given run_id."""
         try:
             return storage.load_run_meta(run_id, config)
@@ -48,7 +51,9 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="run not found")
 
     @app.get("/api/runs/{run_id}/events")
-    def get_run_events(run_id: str, config: AgentDbgConfig = Depends(_get_config)) -> dict:
+    def get_run_events(
+        run_id: str, config: AgentDbgConfig = Depends(_get_config)
+    ) -> dict:
         """Return events array for the run. 404 if run not found."""
         try:
             storage.load_run_meta(run_id, config)

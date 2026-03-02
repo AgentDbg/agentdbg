@@ -11,6 +11,7 @@ ordering can be non-deterministic. For v0.2+: propagate context into workers
 (contextvars.copy_context().run(...)) and use a thread-safe window (e.g. lock around
 appends) with a well-defined ordering rule so loop detection remains meaningful.
 """
+
 from agentdbg._tracing._lifecycle import trace, traced_run
 from agentdbg._tracing._recorders import record_llm_call, record_tool_call, record_state
 

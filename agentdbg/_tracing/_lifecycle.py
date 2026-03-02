@@ -2,6 +2,7 @@
 Run lifecycle: _run_context context manager, trace decorator, traced_run.
 Depends: agentdbg.config, agentdbg.events, agentdbg.storage, _redact, _context.
 """
+
 import sys
 import traceback
 from types import TracebackType
@@ -70,7 +71,9 @@ def _run_context(
     token_config = _config_var.set(config)
     token_window = _event_window_var.set([])
     token_emitted = _loop_emitted_var.set(set())
-    exc_info: tuple[type[BaseException] | None, BaseException | None, TracebackType | None] = (
+    exc_info: tuple[
+        type[BaseException] | None, BaseException | None, TracebackType | None
+    ] = (
         None,
         None,
         None,

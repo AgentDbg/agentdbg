@@ -2,7 +2,6 @@
 Loop detection tests: synthetic events with repeated tail pattern, detect_loop payload shape and stability.
 No I/O; uses in-memory events. pattern_key stability and calling detect_loop again yields same payload.
 """
-import pytest
 
 from agentdbg.loopdetect import detect_loop, pattern_key
 

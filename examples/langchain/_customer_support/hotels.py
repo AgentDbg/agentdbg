@@ -4,6 +4,7 @@ from typing import Optional, Union
 from langchain_core.tools import tool
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Set by main before building the graph.

@@ -5,6 +5,7 @@ Verifies: env > project YAML > user YAML > built-in defaults.
 Env vars override ONLY when explicitly set in os.environ.
 Uses tmp_path and monkeypatch; no real FS or network.
 """
+
 from pathlib import Path
 
 import pytest
@@ -40,14 +41,13 @@ def _write_yaml(directory: Path, content: str) -> Path:
 # 1. YAML wins when env is absent
 # ------------------------------------------------------------------
 
+
 def test_yaml_wins_when_env_missing(tmp_path, monkeypatch):
     """Project YAML overrides defaults when no env vars are set."""
-    _write_yaml(tmp_path, (
-        "redact: false\n"
-        "max_field_bytes: 123\n"
-        "loop_window: 7\n"
-        "loop_repetitions: 5\n"
-    ))
+    _write_yaml(
+        tmp_path,
+        ("redact: false\nmax_field_bytes: 123\nloop_window: 7\nloop_repetitions: 5\n"),
+    )
     # Point home somewhere empty so user YAML is absent.
     fake_home = tmp_path / "fakehome"
     fake_home.mkdir()
@@ -66,6 +66,7 @@ def test_yaml_wins_when_env_missing(tmp_path, monkeypatch):
 # ------------------------------------------------------------------
 # 2. Env overrides YAML when present
 # ------------------------------------------------------------------
+
 
 def test_env_overrides_yaml_when_present(tmp_path, monkeypatch):
     """Explicitly-set env var beats YAML value."""
@@ -86,6 +87,7 @@ def test_env_overrides_yaml_when_present(tmp_path, monkeypatch):
 # 3. Built-in defaults when no YAML and no env
 # ------------------------------------------------------------------
 
+
 def test_defaults_only_when_no_yaml_no_env(tmp_path, monkeypatch):
     """With no YAML and no env, defaults apply."""
     fake_home = tmp_path / "fakehome"
@@ -105,6 +107,7 @@ def test_defaults_only_when_no_yaml_no_env(tmp_path, monkeypatch):
 # ------------------------------------------------------------------
 # 4. Trust-killer: YAML redact=false actually disables redaction
 # ------------------------------------------------------------------
+
 
 def test_yaml_redact_off_disables_redaction(tmp_path, monkeypatch):
     """With YAML redact=0 and no env, _redact_and_truncate must NOT redact."""

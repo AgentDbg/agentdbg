@@ -1,8 +1,7 @@
 """Tests for event helpers: JSON-safety and depth limit (consistent with redaction)."""
-import pytest
 
 from agentdbg.constants import DEPTH_LIMIT, TRUNCATED_MARKER
-from agentdbg.events import _ensure_json_safe, _json_safe_value
+from agentdbg.events import _ensure_json_safe
 
 
 def test_json_safe_value_depth_exceeded_returns_truncated_marker():

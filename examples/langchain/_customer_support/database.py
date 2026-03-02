@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # DB and backup live in this package dir so we can gitignore them
@@ -16,7 +17,9 @@ _DEFAULT_DB = os.path.join(_DATA_DIR, "travel2.sqlite")
 def download_db(local_file: str | None = None):
     local_file = local_file or _DEFAULT_DB
     logger.info(f"Downloading database to {local_file}...")
-    db_url = "https://storage.googleapis.com/benchmarks-artifacts/travel-db/travel2.sqlite"
+    db_url = (
+        "https://storage.googleapis.com/benchmarks-artifacts/travel-db/travel2.sqlite"
+    )
     # The backup lets us restart for each tutorial section
     # backup_file = "travel2.backup.sqlite"
     backup_file = local_file.replace(".sqlite", ".backup.sqlite")
@@ -37,7 +40,7 @@ def update_dates(file, backup_file: str | None = None):
     backup_file = backup_file or file.replace(".sqlite", ".backup.sqlite")
     shutil.copy(backup_file, file)
     conn = sqlite3.connect(file)
-    cursor = conn.cursor()
+    conn.cursor()
 
     tables = pd.read_sql(
         "SELECT name FROM sqlite_master WHERE type='table';", conn

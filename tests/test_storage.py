@@ -2,6 +2,7 @@
 Storage tests: create_run, append_event/load_events, finalize_run.
 Uses temp dir via AGENTDBG_DATA_DIR; env restored by fixture.
 """
+
 import json
 from unittest.mock import patch
 
@@ -37,7 +38,9 @@ def test_append_event_writes_events_jsonl_load_events_reads_back(temp_data_dir):
     config = load_config()
     meta = create_run("test_run", config)
     run_id = meta["run_id"]
-    ev = new_event(EventType.TOOL_CALL, run_id, "tool1", {"tool_name": "tool1", "args": {}})
+    ev = new_event(
+        EventType.TOOL_CALL, run_id, "tool1", {"tool_name": "tool1", "args": {}}
+    )
     append_event(run_id, ev, config)
     loaded = load_events(run_id, config)
     assert len(loaded) == 1
@@ -67,17 +70,24 @@ def _write_run_json(run_dir, run_id: str, run_name: str, started_at: str) -> Non
     """Write a minimal valid run.json into run_dir."""
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "run.json").write_text(
-        json.dumps({
-            "spec_version": "0.1",
-            "run_id": run_id,
-            "run_name": run_name,
-            "started_at": started_at,
-            "ended_at": None,
-            "duration_ms": None,
-            "status": "running",
-            "counts": {"llm_calls": 0, "tool_calls": 0, "errors": 0, "loop_warnings": 0},
-            "last_event_ts": None,
-        }),
+        json.dumps(
+            {
+                "spec_version": "0.1",
+                "run_id": run_id,
+                "run_name": run_name,
+                "started_at": started_at,
+                "ended_at": None,
+                "duration_ms": None,
+                "status": "running",
+                "counts": {
+                    "llm_calls": 0,
+                    "tool_calls": 0,
+                    "errors": 0,
+                    "loop_warnings": 0,
+                },
+                "last_event_ts": None,
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -102,7 +112,9 @@ def test_resolve_run_id_prefix_single_match_returns_full_run_id(temp_data_dir):
     assert resolve_run_id("b1ffcd00", config) == run_id
 
 
-def test_resolve_run_id_prefix_multiple_matches_returns_most_recent_by_started_at(temp_data_dir):
+def test_resolve_run_id_prefix_multiple_matches_returns_most_recent_by_started_at(
+    temp_data_dir,
+):
     """resolve_run_id with prefix matching multiple runs returns the most recent by started_at."""
     config = load_config()
     runs_base = config.data_dir / "runs"
@@ -183,7 +195,9 @@ def test_load_events_skips_invalid_json_lines(temp_data_dir):
     events_path = config.data_dir / "runs" / run_id / "events.jsonl"
     valid1 = json.dumps({"event_type": "RUN_START", "run_id": run_id, "payload": {}})
     valid2 = json.dumps({"event_type": "RUN_END", "run_id": run_id, "payload": {}})
-    events_path.write_text(valid1 + "\nnot valid json\n" + valid2 + "\n{broken\n", encoding="utf-8")
+    events_path.write_text(
+        valid1 + "\nnot valid json\n" + valid2 + "\n{broken\n", encoding="utf-8"
+    )
     loaded = load_events(run_id, config)
     assert len(loaded) == 2
     assert loaded[0].get("event_type") == "RUN_START"
@@ -208,7 +222,9 @@ def test_load_events_logs_warning_for_corrupt_jsonl_lines(temp_data_dir):
     assert mock_logger.warning.call_count == 2
     # First corrupt line at line_no 2
     call1 = mock_logger.warning.call_args_list[0]
-    assert call1[0][0] == "load_events: skipping corrupt JSONL line run_id=%s line=%s: %s"
+    assert (
+        call1[0][0] == "load_events: skipping corrupt JSONL line run_id=%s line=%s: %s"
+    )
     assert call1[0][1] == run_id
     assert call1[0][2] == 2
     assert isinstance(call1[0][3], json.JSONDecodeError)

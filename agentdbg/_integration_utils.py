@@ -5,6 +5,7 @@ Integrations register run_enter and run_exit callbacks; the outermost run bounda
 invokes them at RUN_START and in the finally block (with exception info).
 No plugin discovery or auto-loading; registration is explicit on integration import.
 """
+
 from types import TracebackType
 from typing import Callable
 

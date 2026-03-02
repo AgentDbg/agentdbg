@@ -7,6 +7,7 @@ Then use `with agentdbg.traced_run(...): crew.kickoff()` or `@agentdbg.trace` ar
 Hook ordering caveat: CrewAI runs hooks in registration order. If another before-hook returns False
 and blocks execution, our before-hook may never run for that call, so we cannot capture it.
 """
+
 import time
 import traceback
 from types import TracebackType
@@ -35,12 +36,22 @@ _crewai_hooks_registered = False
 
 # Per-run pending: run_id -> { key: entry }. Keys are stable for before/after matching.
 # LLM: we use a stack per (run_id, executor_id, iterations) so after_hook pops the matching before.
-_pending_llm: dict[str, dict[tuple[int, int, int], dict[str, Any]]] = {}  # run_id -> {(exec_id, it, seq): entry}
-_llm_stack: dict[tuple[str, int, int], list[tuple[int, int, int]]] = {}  # (run_id, exec_id, it) -> [keys]
-_llm_next_seq: dict[tuple[str, int, int], int] = {}  # (run_id, exec_id, it) -> next sequence number
+_pending_llm: dict[
+    str, dict[tuple[int, int, int], dict[str, Any]]
+] = {}  # run_id -> {(exec_id, it, seq): entry}
+_llm_stack: dict[
+    tuple[str, int, int], list[tuple[int, int, int]]
+] = {}  # (run_id, exec_id, it) -> [keys]
+_llm_next_seq: dict[
+    tuple[str, int, int], int
+] = {}  # (run_id, exec_id, it) -> next sequence number
 
-_pending_tool: dict[str, dict[tuple[str, int], dict[str, Any]]] = {}  # run_id -> {(tool_name, seq): entry}
-_tool_next_seq: dict[tuple[str, str], int] = {}  # (run_id, tool_name) -> next sequence number
+_pending_tool: dict[
+    str, dict[tuple[str, int], dict[str, Any]]
+] = {}  # run_id -> {(tool_name, seq): entry}
+_tool_next_seq: dict[
+    tuple[str, str], int
+] = {}  # (run_id, tool_name) -> next sequence number
 
 
 def _snapshot_messages(messages: Any) -> Any:
@@ -54,7 +65,12 @@ def _snapshot_messages(messages: Any) -> Any:
         if isinstance(m, dict):
             out.append(dict(m))
         elif hasattr(m, "__dict__"):
-            out.append({"type": getattr(m, "type", "unknown"), "content": getattr(m, "content", str(m))})
+            out.append(
+                {
+                    "type": getattr(m, "type", "unknown"),
+                    "content": getattr(m, "content", str(m)),
+                }
+            )
         else:
             out.append(str(m))
     return out
@@ -89,9 +105,17 @@ def _crewai_meta_llm(context: Any) -> dict[str, Any]:
             meta["crewai"]["executor_id"] = id(context.executor)
         if hasattr(context, "iterations"):
             meta.setdefault("crewai", {})["iterations"] = context.iterations
-        if hasattr(context, "agent") and context.agent is not None and getattr(context.agent, "role", None):
+        if (
+            hasattr(context, "agent")
+            and context.agent is not None
+            and getattr(context.agent, "role", None)
+        ):
             meta["agent_role"] = context.agent.role
-        if hasattr(context, "task") and context.task is not None and getattr(context.task, "description", None):
+        if (
+            hasattr(context, "task")
+            and context.task is not None
+            and getattr(context.task, "description", None)
+        ):
             meta["task_desc"] = context.task.description
         if hasattr(context, "crew") and context.crew is not None:
             meta.setdefault("crewai", {})["crew_id"] = id(context.crew)
@@ -104,9 +128,17 @@ def _crewai_meta_tool(context: Any) -> dict[str, Any]:
     """Build meta.crewai.* for TOOL_CALL."""
     meta: dict[str, Any] = {"framework": "crewai"}
     try:
-        if hasattr(context, "agent") and context.agent is not None and getattr(context.agent, "role", None):
+        if (
+            hasattr(context, "agent")
+            and context.agent is not None
+            and getattr(context.agent, "role", None)
+        ):
             meta["agent_role"] = context.agent.role
-        if hasattr(context, "task") and context.task is not None and getattr(context.task, "description", None):
+        if (
+            hasattr(context, "task")
+            and context.task is not None
+            and getattr(context.task, "description", None)
+        ):
             meta["task_desc"] = context.task.description
     except Exception:
         pass
@@ -137,7 +169,11 @@ def _before_llm_call(context: Any) -> bool | None:
         run_id = _get_active_run_id()
         if run_id is None:
             return None
-        executor_id = id(context.executor) if getattr(context, "executor", None) is not None else 0
+        executor_id = (
+            id(context.executor)
+            if getattr(context, "executor", None) is not None
+            else 0
+        )
         iterations = getattr(context, "iterations", 0)
         key_base = (run_id, executor_id, iterations)
         seq = _llm_next_seq.get(key_base, 0)
@@ -161,7 +197,11 @@ def _after_llm_call(context: Any) -> str | None:
         run_id = _get_active_run_id()
         if run_id is None:
             return None
-        executor_id = id(context.executor) if getattr(context, "executor", None) is not None else 0
+        executor_id = (
+            id(context.executor)
+            if getattr(context, "executor", None) is not None
+            else 0
+        )
         iterations = getattr(context, "iterations", 0)
         key_base = (run_id, executor_id, iterations)
         stack = _llm_stack.get(key_base, [])
@@ -178,7 +218,13 @@ def _after_llm_call(context: Any) -> str | None:
             prompt=pending["messages"],
             response=response,
             usage=None,
-            meta={**pending["meta"], "crewai": {**(pending["meta"].get("crewai") or {}), "duration_ms": duration_ms}},
+            meta={
+                **pending["meta"],
+                "crewai": {
+                    **(pending["meta"].get("crewai") or {}),
+                    "duration_ms": duration_ms,
+                },
+            },
             provider="unknown",
             status="ok",
         )
@@ -228,7 +274,13 @@ def _after_tool_call(context: Any) -> str | None:
             name=tool_name,
             args=pending["tool_input"],
             result=tool_result,
-            meta={**pending["meta"], "crewai": {**(pending["meta"].get("crewai") or {}), "duration_ms": duration_ms}},
+            meta={
+                **pending["meta"],
+                "crewai": {
+                    **(pending["meta"].get("crewai") or {}),
+                    "duration_ms": duration_ms,
+                },
+            },
             status="ok",
         )
         return None
@@ -260,7 +312,11 @@ def _flush_pending_for_run(
 
         for key, entry in list(_pending_llm.get(run_id, {}).items()):
             duration_ms = max(0, int((time.perf_counter() - entry["start_ts"]) * 1000))
-            crewai_meta = {**((entry.get("meta") or {}).get("crewai") or {}), "completion": "missing_after_hook", "duration_ms": duration_ms}
+            crewai_meta = {
+                **((entry.get("meta") or {}).get("crewai") or {}),
+                "completion": "missing_after_hook",
+                "duration_ms": duration_ms,
+            }
             meta = {**(entry.get("meta") or {}), "crewai": crewai_meta}
             record_llm_call(
                 model=entry["model"],
@@ -275,7 +331,11 @@ def _flush_pending_for_run(
 
         for key, entry in list(_pending_tool.get(run_id, {}).items()):
             duration_ms = max(0, int((time.perf_counter() - entry["start_ts"]) * 1000))
-            crewai_meta = {**((entry.get("meta") or {}).get("crewai") or {}), "completion": "missing_after_hook", "duration_ms": duration_ms}
+            crewai_meta = {
+                **((entry.get("meta") or {}).get("crewai") or {}),
+                "completion": "missing_after_hook",
+                "duration_ms": duration_ms,
+            }
             meta = {**(entry.get("meta") or {}), "crewai": crewai_meta}
             record_tool_call(
                 name=key[0],

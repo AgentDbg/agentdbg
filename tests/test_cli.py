@@ -4,6 +4,7 @@ Every test uses temp dir via AGENTDBG_DATA_DIR (fixture restores env).
 Covers: list (empty dir exit 0), export (missing run exit 2), list --json (valid JSON with spec_version, runs),
         _wait_for_port readiness probe, and browser-open ordering for `view`.
 """
+
 import json
 import socket
 import threading
@@ -44,17 +45,26 @@ def test_export_accepts_run_id_prefix(empty_data_dir):
     run_id = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
     run_dir = config.data_dir / "runs" / run_id
     run_dir.mkdir(parents=True)
-    (run_dir / "run.json").write_text(json.dumps({
-        "spec_version": "0.1",
-        "run_id": run_id,
-        "run_name": "prefix_test",
-        "started_at": "2026-01-01T00:00:00.000Z",
-        "ended_at": None,
-        "duration_ms": 0,
-        "status": "ok",
-        "counts": {"llm_calls": 0, "tool_calls": 0, "errors": 0, "loop_warnings": 0},
-        "last_event_ts": None,
-    }))
+    (run_dir / "run.json").write_text(
+        json.dumps(
+            {
+                "spec_version": "0.1",
+                "run_id": run_id,
+                "run_name": "prefix_test",
+                "started_at": "2026-01-01T00:00:00.000Z",
+                "ended_at": None,
+                "duration_ms": 0,
+                "status": "ok",
+                "counts": {
+                    "llm_calls": 0,
+                    "tool_calls": 0,
+                    "errors": 0,
+                    "loop_warnings": 0,
+                },
+                "last_event_ts": None,
+            }
+        )
+    )
     (run_dir / "events.jsonl").write_text("")
 
     prefix = run_id[:8]
@@ -77,7 +87,9 @@ def test_export_success_path_writes_run_and_events(empty_data_dir):
     config = load_config()
     create_run("export_success_run", config)
     run_id = get_latest_run_id(config)
-    ev = new_event(EventType.TOOL_CALL, run_id, "test_tool", {"tool_name": "test_tool", "args": {}})
+    ev = new_event(
+        EventType.TOOL_CALL, run_id, "test_tool", {"tool_name": "test_tool", "args": {}}
+    )
     append_event(run_id, ev, config)
 
     tmpfile = empty_data_dir / "export_success.json"

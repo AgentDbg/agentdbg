@@ -5,13 +5,12 @@ Runs the recorder in a subprocess so atexit finalization happens and test proces
 
 TODO: If we drop implicit run later, we should remove this test.
 """
+
 import os
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from agentdbg.config import load_config
 from agentdbg.events import EventType
@@ -60,7 +59,9 @@ def test_implicit_run_creates_run_with_run_start_and_tool_call():
             assert EventType.TOOL_CALL.value in event_types, "expected TOOL_CALL"
 
             run_json = load_run_meta(run_id, config)
-            assert run_json["status"] in ("ok", "running"), "run should be finalized or still running"
+            assert run_json["status"] in ("ok", "running"), (
+                "run should be finalized or still running"
+            )
             assert run_json["counts"]["tool_calls"] == 1
         finally:
             os.environ.pop("AGENTDBG_DATA_DIR", None)

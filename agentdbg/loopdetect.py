@@ -4,6 +4,7 @@ Loop detection for agent runs: signature computation and repeated-pattern detect
 Stdlib only. Pure functions, no I/O. Used to emit LOOP_WARNING when the last N
 events contain a consecutively repeating signature subsequence.
 """
+
 # Sentinel for evidence_event_ids when an event has no event_id (better UX than "")
 MISSING_EVENT_ID = "__MISSING__"
 

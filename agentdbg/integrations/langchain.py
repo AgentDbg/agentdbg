@@ -3,6 +3,7 @@ LangChain/LangGraph callback handler that forwards LLM and tool events to AgentD
 
 Uses only AgentDbg SDK: record_llm_call, record_tool_call. No CLI or server imports.
 """
+
 from typing import Any
 
 from agentdbg.tracing import record_llm_call, record_tool_call
@@ -15,7 +16,7 @@ except ImportError as e:
     raise MissingOptionalDependencyError(
         "The LangChain/LangGraph integration requires optional dependencies that are not installed. "
         "Missing: langchain (langchain_core). "
-        "Install with: pip install \"agentdbg[langchain]\" or pip install langchain. "
+        'Install with: pip install "agentdbg[langchain]" or pip install langchain. '
         "This integration is optional; the core agentdbg package does not depend on it."
     ) from e
 
@@ -63,7 +64,9 @@ def _messages_as_prompt(messages: Any) -> Any:
             continue
         for msg in inner:
             if hasattr(msg, "content") and hasattr(msg, "type"):
-                out.append({"type": getattr(msg, "type", "unknown"), "content": msg.content})
+                out.append(
+                    {"type": getattr(msg, "type", "unknown"), "content": msg.content}
+                )
             else:
                 out.append(str(msg))
     return out if out else None
@@ -204,6 +207,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         name = _tool_name_from_serialized(serialized)
         try:
             import json
+
             args = json.loads(input_str) if input_str.strip() else {}
         except Exception:
             args = input_str if input_str else None

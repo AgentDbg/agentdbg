@@ -2,6 +2,7 @@
 Context vars, implicit-run state, _ensure_run, and atexit finalization.
 Depends: agentdbg.config, agentdbg.constants, agentdbg.events, agentdbg.storage, _redact.
 """
+
 import atexit
 import os
 import sys
@@ -19,9 +20,15 @@ from agentdbg._tracing._redact import _redact_and_truncate, _redact_argv
 
 _run_id_var: ContextVar[str | None] = ContextVar("agentdbg_run_id", default=None)
 _counts_var: ContextVar[dict | None] = ContextVar("agentdbg_counts", default=None)
-_config_var: ContextVar[AgentDbgConfig | None] = ContextVar("agentdbg_config", default=None)
-_event_window_var: ContextVar[list[dict] | None] = ContextVar("agentdbg_event_window", default=None)
-_loop_emitted_var: ContextVar[set[str] | None] = ContextVar("agentdbg_loop_emitted", default=None)
+_config_var: ContextVar[AgentDbgConfig | None] = ContextVar(
+    "agentdbg_config", default=None
+)
+_event_window_var: ContextVar[list[dict] | None] = ContextVar(
+    "agentdbg_event_window", default=None
+)
+_loop_emitted_var: ContextVar[set[str] | None] = ContextVar(
+    "agentdbg_loop_emitted", default=None
+)
 
 # Implicit run: stored so atexit can finalize (RUN_END + run.json status).
 _implicit_run_id: str | None = None
@@ -81,7 +88,9 @@ def _run_start_payload(run_name: str | None) -> dict[str, Any]:
     }
 
 
-def _run_start_payload_for_event(run_name: str | None, config: AgentDbgConfig) -> dict[str, Any]:
+def _run_start_payload_for_event(
+    run_name: str | None, config: AgentDbgConfig
+) -> dict[str, Any]:
     """Build RUN_START payload with argv values redacted per redact_keys, then apply full redaction/truncation."""
     payload = _run_start_payload(run_name)
     payload["argv"] = _redact_argv(payload["argv"], config)
@@ -112,7 +121,11 @@ def _finalize_implicit_run() -> None:
     """Atexit hook: write RUN_END and finalize run.json for the implicit run, if any."""
     global _implicit_run_id, _implicit_counts, _implicit_config, _implicit_started_at
     global _implicit_event_window, _implicit_loop_emitted
-    if _implicit_run_id is None or _implicit_config is None or _implicit_started_at is None:
+    if (
+        _implicit_run_id is None
+        or _implicit_config is None
+        or _implicit_started_at is None
+    ):
         return
     run_id = _implicit_run_id
     counts = _implicit_counts or default_counts()
@@ -152,10 +165,26 @@ def _ensure_run() -> tuple[str, dict, AgentDbgConfig, list[dict], set[str]] | No
         if counts is not None and config is not None:
             window = _event_window_var.get()
             emitted = _loop_emitted_var.get()
-            return (run_id, counts, config, window if window is not None else [], emitted if emitted is not None else set())
+            return (
+                run_id,
+                counts,
+                config,
+                window if window is not None else [],
+                emitted if emitted is not None else set(),
+            )
     if os.environ.get("AGENTDBG_IMPLICIT_RUN", "").strip() == "1":
-        if _implicit_run_id is not None and _implicit_counts is not None and _implicit_config is not None:
-            return (_implicit_run_id, _implicit_counts, _implicit_config, _implicit_event_window, _implicit_loop_emitted)
+        if (
+            _implicit_run_id is not None
+            and _implicit_counts is not None
+            and _implicit_config is not None
+        ):
+            return (
+                _implicit_run_id,
+                _implicit_counts,
+                _implicit_config,
+                _implicit_event_window,
+                _implicit_loop_emitted,
+            )
         config = load_config()
         run_name = _resolve_run_name("implicit", None)
         meta = create_run(run_name, config)

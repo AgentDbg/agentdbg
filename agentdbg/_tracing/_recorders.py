@@ -2,6 +2,7 @@
 Recorders: record_llm_call, record_tool_call, record_state.
 Depends: agentdbg.events, agentdbg.storage, agentdbg.loopdetect, _redact, _context.
 """
+
 from typing import Any
 
 from agentdbg.config import AgentDbgConfig
@@ -36,7 +37,9 @@ def _maybe_emit_loop_warning(
         return
     pattern = payload.get("pattern", "loop_warning")
     max_name_len = 80
-    name = pattern if len(pattern) <= max_name_len else pattern[: max_name_len - 1] + "..."
+    name = (
+        pattern if len(pattern) <= max_name_len else pattern[: max_name_len - 1] + "..."
+    )
     ev = new_event(EventType.LOOP_WARNING, run_id, name, payload)
     append_event(run_id, ev, config)
     counts["loop_warnings"] = counts.get("loop_warnings", 0) + 1
@@ -85,7 +88,7 @@ def record_llm_call(
     counts["llm_calls"] = counts.get("llm_calls", 0) + 1
     window.append(ev)
     if len(window) > config.loop_window:
-        window[:] = window[-config.loop_window:]
+        window[:] = window[-config.loop_window :]
     _maybe_emit_loop_warning(run_id, counts, config, window, emitted)
 
 
@@ -123,7 +126,7 @@ def record_tool_call(
     counts["tool_calls"] = counts.get("tool_calls", 0) + 1
     window.append(ev)
     if len(window) > config.loop_window:
-        window[:] = window[-config.loop_window:]
+        window[:] = window[-config.loop_window :]
     _maybe_emit_loop_warning(run_id, counts, config, window, emitted)
 
 
@@ -146,5 +149,5 @@ def record_state(
     append_event(run_id, ev, config)
     window.append(ev)
     if len(window) > config.loop_window:
-        window[:] = window[-config.loop_window:]
+        window[:] = window[-config.loop_window :]
     _maybe_emit_loop_warning(run_id, counts, config, window, emitted)

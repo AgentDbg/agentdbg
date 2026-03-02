@@ -4,8 +4,8 @@ from langchain_core.runnables import RunnableLambda
 from langgraph.prebuilt import ToolNode
 
 import logging
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 
 def handle_tool_error(state) -> dict:

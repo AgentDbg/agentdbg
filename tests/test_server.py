@@ -3,6 +3,7 @@ Viewer server tests: run_id validation and path-traversal hardening.
 
 Uses tmp dir via AGENTDBG_DATA_DIR; no real home directory touched.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 

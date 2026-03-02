@@ -13,6 +13,7 @@ Run from repo root:
 Then:
   agentdbg view
 """
+
 import os
 
 from agentdbg import trace, record_llm_call, record_state, record_tool_call
@@ -58,7 +59,10 @@ def run_demo() -> None:
     )
 
     record_state(
-        state={"phase": "loop-demo", "note": "repeat the same tool call to trigger LOOP_WARNING"},
+        state={
+            "phase": "loop-demo",
+            "note": "repeat the same tool call to trigger LOOP_WARNING",
+        },
         meta={"demo": "pure-python"},
     )
 

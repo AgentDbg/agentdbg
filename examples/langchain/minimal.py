@@ -4,6 +4,7 @@ Uses fake LLM (no network). Run from repo root:
   uv run --extra langchain python examples/langchain/minimal.py
 Then: agentdbg view
 """
+
 from agentdbg import trace
 from agentdbg.integrations import AgentDbgLangChainCallbackHandler
 

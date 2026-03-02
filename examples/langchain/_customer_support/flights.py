@@ -7,6 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Set by main before building the graph so tools use the correct DB path.

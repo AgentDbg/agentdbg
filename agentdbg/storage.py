@@ -4,6 +4,7 @@ Local storage for AgentDbg runs: run metadata (run.json) and append-only events 
 ~/.agentdbg/runs/<run_id>/ with required run.json and events.jsonl.
 Uses config.data_dir (default ~/.agentdbg). Stdlib only.
 """
+
 import json
 import logging
 import os
@@ -33,7 +34,12 @@ def validate_run_id_format(run_id: str) -> str:
     if not run_id or not isinstance(run_id, str):
         raise ValueError("invalid run_id")
     run_id = run_id.strip()
-    if len(run_id) > _RUN_ID_MAX_LEN or ".." in run_id or "/" in run_id or "\\" in run_id:
+    if (
+        len(run_id) > _RUN_ID_MAX_LEN
+        or ".." in run_id
+        or "/" in run_id
+        or "\\" in run_id
+    ):
         raise ValueError("invalid run_id")
     try:
         u = uuid.UUID(run_id)

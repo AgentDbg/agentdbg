@@ -4,6 +4,7 @@ Event types and factory for AgentDebugger trace events.
 All events are JSON-serializable dicts.
 Pure functions, stdlib only, unit-testable.
 """
+
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
@@ -86,7 +87,9 @@ def new_event(
         Event dict with spec_version, event_id, run_id, parent_id, event_type,
         ts, duration_ms, name, payload, meta.
     """
-    type_str = event_type.value if isinstance(event_type, EventType) else str(event_type)
+    type_str = (
+        event_type.value if isinstance(event_type, EventType) else str(event_type)
+    )
     event_id = str(uuid.uuid4())
     ts = utc_now_iso_ms_z()
     # TODO: safe_payload defaults to {} if payload is None

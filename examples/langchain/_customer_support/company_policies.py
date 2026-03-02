@@ -7,6 +7,7 @@ import requests
 
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,8 +49,10 @@ class VectorStoreRetriever:
             {**self._docs[idx], "similarity": scores[idx]} for idx in top_k_idx_sorted
         ]
 
+
 # Set by init_policies() before building the graph so lookup_policy uses it.
 _retriever: VectorStoreRetriever | None = None
+
 
 def get_retriever(docs):
     logger.info("Getting retriever...")
@@ -68,7 +71,9 @@ def lookup_policy(query: str) -> str:
     """Consult the company policies to check whether certain options are permitted.
     Use this before making any flight changes performing other 'write' events."""
     if _retriever is None:
-        raise RuntimeError("Company policies not initialized; call init_policies() first.")
+        raise RuntimeError(
+            "Company policies not initialized; call init_policies() first."
+        )
     logger.info(f"Looking up policy for query: {query}")
     docs = _retriever.query(query, k=2)
     return "\n\n".join([doc["page_content"] for doc in docs])

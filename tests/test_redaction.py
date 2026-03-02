@@ -2,6 +2,7 @@
 Tests for redaction: sensitive keys in payloads are replaced with __REDACTED__.
 Uses AGENTDBG_REDACT_KEYS and temp dir via AGENTDBG_DATA_DIR.
 """
+
 import os
 from unittest.mock import patch
 
@@ -81,6 +82,7 @@ def redact_message_and_stack_env():
 
 def test_record_tool_call_redacts_args_with_token_key(temp_data_dir, redact_token_env):
     """record_tool_call with args containing 'token' key -> value is __REDACTED__."""
+
     @trace
     def run_with_tool():
         record_tool_call("my_tool", args={"token": "secret-api-key", "query": "hello"})
@@ -93,7 +95,9 @@ def test_record_tool_call_redacts_args_with_token_key(temp_data_dir, redact_toke
     run_id = runs[0]["run_id"]
     events = load_events(run_id, config)
 
-    tool_events = [e for e in events if e.get("event_type") == EventType.TOOL_CALL.value]
+    tool_events = [
+        e for e in events if e.get("event_type") == EventType.TOOL_CALL.value
+    ]
     assert len(tool_events) == 1
     payload = tool_events[0]["payload"]
     args = payload.get("args")
@@ -102,8 +106,11 @@ def test_record_tool_call_redacts_args_with_token_key(temp_data_dir, redact_toke
     assert args.get("query") == "hello"
 
 
-def test_error_event_payload_redacted_decorator(temp_data_dir, redact_message_and_stack_env):
+def test_error_event_payload_redacted_decorator(
+    temp_data_dir, redact_message_and_stack_env
+):
     """ERROR from @trace has message and stack redacted when redact_keys include message,stack."""
+
     @trace
     def run_that_raises():
         raise ValueError("API key sk-abc123 is invalid")
@@ -125,7 +132,9 @@ def test_error_event_payload_redacted_decorator(temp_data_dir, redact_message_an
     assert payload.get("error_type") == "ValueError"
 
 
-def test_error_event_payload_redacted_context_manager(temp_data_dir, redact_message_and_stack_env):
+def test_error_event_payload_redacted_context_manager(
+    temp_data_dir, redact_message_and_stack_env
+):
     """ERROR from traced_run() has message and stack redacted when redact_keys include message,stack."""
     with pytest.raises(ValueError, match="secret in context"):
         with traced_run(name="failing_run"):
@@ -147,6 +156,7 @@ def test_error_event_payload_redacted_context_manager(temp_data_dir, redact_mess
 def test_run_start_argv_redacted(temp_data_dir):
     """RUN_START keeps argv but redacts only sensitive option values, e.g. --api-key=secret -> --api-key=__REDACTED__."""
     with patch("sys.argv", ["test_script.py", "--api-key=sk-secret-1234", "--verbose"]):
+
         @trace
         def run_quiet():
             pass
@@ -159,7 +169,9 @@ def test_run_start_argv_redacted(temp_data_dir):
     run_id = runs[0]["run_id"]
     events = load_events(run_id, config)
 
-    run_start_events = [e for e in events if e.get("event_type") == EventType.RUN_START.value]
+    run_start_events = [
+        e for e in events if e.get("event_type") == EventType.RUN_START.value
+    ]
     assert len(run_start_events) == 1
     payload = run_start_events[0]["payload"]
     argv = payload.get("argv")
@@ -237,7 +249,9 @@ def test_redact_substring_match():
     assert out["other"] == "unchanged"
 
 
-def test_exception_message_secret_not_in_events_jsonl(temp_data_dir, redact_message_and_stack_env):
+def test_exception_message_secret_not_in_events_jsonl(
+    temp_data_dir, redact_message_and_stack_env
+):
     """Secret in exception message must NOT appear anywhere in events.jsonl file content."""
     secret = "sk-leaked-api-key-xyz789"
     assert secret not in REDACTED_MARKER
@@ -256,7 +270,9 @@ def test_exception_message_secret_not_in_events_jsonl(temp_data_dir, redact_mess
     events_path = config.data_dir / "runs" / run_id / "events.jsonl"
     raw_content = events_path.read_text(encoding="utf-8")
 
-    assert secret not in raw_content, f"Secret {secret!r} must not appear in events.jsonl"
+    assert secret not in raw_content, (
+        f"Secret {secret!r} must not appear in events.jsonl"
+    )
 
 
 def test_argv_api_key_not_in_events_jsonl(temp_data_dir):
@@ -264,6 +280,7 @@ def test_argv_api_key_not_in_events_jsonl(temp_data_dir):
     secret = "sk-secret-1234"
 
     with patch("sys.argv", ["main.py", f"--api-key={secret}", "--verbose"]):
+
         @trace
         def run_quiet():
             pass
@@ -277,4 +294,6 @@ def test_argv_api_key_not_in_events_jsonl(temp_data_dir):
     events_path = config.data_dir / "runs" / run_id / "events.jsonl"
     raw_content = events_path.read_text(encoding="utf-8")
 
-    assert secret not in raw_content, f"API key value {secret!r} must not appear in events.jsonl"
+    assert secret not in raw_content, (
+        f"API key value {secret!r} must not appear in events.jsonl"
+    )

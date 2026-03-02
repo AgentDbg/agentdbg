@@ -2,13 +2,17 @@
 import logging
 import os
 from typing import Any
+import uuid
 
-logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "ERROR").upper()
-)
+from agentdbg import trace
+from agentdbg.integrations import AgentDbgLangChainCallbackHandler
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR").upper())
+
 
 def get_api_keys():
     from _customer_support.prereq import _set_env
+
     _set_env("ANTHROPIC_API_KEY")
     _set_env("OPENAI_API_KEY")
     _set_env("TAVILY_API_KEY")
@@ -16,12 +20,10 @@ def get_api_keys():
 
 def get_db(local_file: str | None = None):
     from _customer_support.database import download_db, update_dates
+
     local_file = download_db(local_file)
     return update_dates(local_file)
 
-
-
-import uuid
 
 def example_questions():
     # Let's create an example conversation a user might have with the assistant
@@ -43,8 +45,6 @@ def example_questions():
     ]
 
 
-from agentdbg.integrations import AgentDbgLangChainCallbackHandler
-
 def get_config(thread_id: str, handler: Any):
     config = {
         "configurable": {
@@ -60,16 +60,19 @@ def get_config(thread_id: str, handler: Any):
     return config
 
 
-from agentdbg import trace
-
 @trace(name="langchain customer support example")
 def run_graph(graph, questions: list[str], config: dict):
     from _customer_support.utilities import _print_event
+
     log = logging.getLogger(__name__)
     log.info("Running graph with %d question(s)", len(questions))
     _printed = set()
     for i, question in enumerate(questions):
-        log.info("Question %d: %s", i + 1, question[:60] + "..." if len(question) > 60 else question)
+        log.info(
+            "Question %d: %s",
+            i + 1,
+            question[:60] + "..." if len(question) > 60 else question,
+        )
         events = graph.stream(
             {"messages": ("user", question)}, config, stream_mode="values"
         )
@@ -85,6 +88,7 @@ def main():
 
     # Inject db path so all tool modules use the same DB
     from _customer_support import flights, hotels, car_rentals, excursions
+
     flights.db = db
     hotels.db = db
     car_rentals.db = db
@@ -92,6 +96,7 @@ def main():
 
     from _customer_support.agent import make_chat_model
     from _customer_support.graph import make_graph
+
     make_chat_model(db)
     graph = make_graph()
 

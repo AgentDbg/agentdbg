@@ -140,7 +140,9 @@ def load_config(project_root: Path | None = None) -> AgentDbgConfig:
 
     if "AGENTDBG_MAX_FIELD_BYTES" in os.environ:
         try:
-            max_field_bytes = max(_MIN_MAX_FIELD_BYTES, int(os.environ["AGENTDBG_MAX_FIELD_BYTES"]))
+            max_field_bytes = max(
+                _MIN_MAX_FIELD_BYTES, int(os.environ["AGENTDBG_MAX_FIELD_BYTES"])
+            )
         except ValueError:
             pass
 
@@ -152,7 +154,9 @@ def load_config(project_root: Path | None = None) -> AgentDbgConfig:
 
     if "AGENTDBG_LOOP_REPETITIONS" in os.environ:
         try:
-            loop_repetitions = max(_MIN_LOOP_REPETITIONS, int(os.environ["AGENTDBG_LOOP_REPETITIONS"]))
+            loop_repetitions = max(
+                _MIN_LOOP_REPETITIONS, int(os.environ["AGENTDBG_LOOP_REPETITIONS"])
+            )
         except ValueError:
             pass
 

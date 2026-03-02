@@ -3,6 +3,7 @@ Typer CLI for AgentDbg.
 
 Commands: list, export, view. Entrypoint: main() for console script agentdbg.cli:main.
 """
+
 import json
 import socket
 import threading
@@ -55,7 +56,9 @@ def _run_table_rows(runs: list[dict]) -> list[list[str]]:
         llm = counts.get("llm_calls", 0)
         tool = counts.get("tool_calls", 0)
         status = r.get("status") or ""
-        rows.append([run_id, run_name, started_at, duration_str, str(llm), str(tool), status])
+        rows.append(
+            [run_id, run_name, started_at, duration_str, str(llm), str(tool), status]
+        )
     return rows
 
 
@@ -72,7 +75,12 @@ def _format_text_table(rows: list[list[str]], headers: list[str]) -> str:
     sep = "\t"
     lines.append(sep.join(h.ljust(col_widths[i]) for i, h in enumerate(headers)))
     for row in rows:
-        lines.append(sep.join(str(row[i]).ljust(col_widths[i]) for i in range(min(len(row), len(col_widths)))))
+        lines.append(
+            sep.join(
+                str(row[i]).ljust(col_widths[i])
+                for i in range(min(len(row), len(col_widths)))
+            )
+        )
     return "\n".join(lines)
 
 
@@ -89,7 +97,15 @@ def list_cmd(
             out = {"spec_version": SPEC_VERSION, "runs": runs}
             print(json.dumps(out, ensure_ascii=False))
         else:
-            headers = ["run_id", "run_name", "started_at", "duration_ms", "llm_calls", "tool_calls", "status"]
+            headers = [
+                "run_id",
+                "run_name",
+                "started_at",
+                "duration_ms",
+                "llm_calls",
+                "tool_calls",
+                "status",
+            ]
             rows = _run_table_rows(runs)
             print(_format_text_table(rows, headers))
     except Exception as e:
@@ -101,7 +117,9 @@ def list_cmd(
 @app.command("export")
 def export_cmd(
     run_id: str = typer.Argument(..., help="Run ID or prefix to export"),
-    out: Path = typer.Option(..., "--out", "-o", path_type=Path, help="Output JSON file path"),
+    out: Path = typer.Option(
+        ..., "--out", "-o", path_type=Path, help="Output JSON file path"
+    ),
 ) -> None:
     """Export a run to a single JSON file (run metadata + events array)."""
     try:
@@ -132,7 +150,9 @@ def view_cmd(
     host: str = typer.Option("127.0.0.1", "--host", "-H", help="Bind host"),
     port: int = typer.Option(8712, "--port", "-p", help="Bind port"),
     no_browser: bool = typer.Option(False, "--no-browser", help="Do not open browser"),
-    json_out: bool = typer.Option(False, "--json", help="Print run_id, url, status as JSON then start server"),
+    json_out: bool = typer.Option(
+        False, "--json", help="Print run_id, url, status as JSON then start server"
+    ),
 ) -> None:
     """Start local viewer server and optionally open browser."""
     try:

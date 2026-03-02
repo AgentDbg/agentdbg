@@ -3,6 +3,7 @@ Tracing tests: @trace success path (RUN_START + RUN_END, status ok), error path 
 and loop detection integration (repeated pattern triggers LOOP_WARNING exactly once).
 Uses temp dir via AGENTDBG_DATA_DIR; env restored by fixture.
 """
+
 import pytest
 
 from agentdbg import record_llm_call, record_state, record_tool_call, trace, traced_run
@@ -69,7 +70,9 @@ def test_loop_warning_emitted_once_for_repeated_pattern(temp_data_dir):
     events = load_events(run_id, config)
     run_meta = load_run_meta(run_id, config)
 
-    loop_warnings = [e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value]
+    loop_warnings = [
+        e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value
+    ]
     assert len(loop_warnings) == 1
     assert run_meta.get("counts", {}).get("loop_warnings") == 1
     payload = loop_warnings[0].get("payload", {})
@@ -80,20 +83,27 @@ def test_loop_warning_emitted_once_for_repeated_pattern(temp_data_dir):
 
 def test_tool_call_records_error_status_and_error_object_on_exception(temp_data_dir):
     """Tool that raises records TOOL_CALL with status=error and error object (type, message)."""
+
     @trace
     def _run():
         try:
+
             def failing_tool():
                 raise ValueError("boom")
+
             failing_tool()
         except ValueError as e:
-            record_tool_call("failing_tool", args={}, result=None, status="error", error=e)
+            record_tool_call(
+                "failing_tool", args={}, result=None, status="error", error=e
+            )
 
     _run()
     config = load_config()
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
-    tool_events = [e for e in events if e.get("event_type") == EventType.TOOL_CALL.value]
+    tool_events = [
+        e for e in events if e.get("event_type") == EventType.TOOL_CALL.value
+    ]
     assert len(tool_events) >= 1
     payload = tool_events[0].get("payload", {})
     assert payload.get("status") == "error"
@@ -105,6 +115,7 @@ def test_tool_call_records_error_status_and_error_object_on_exception(temp_data_
 
 def test_llm_call_records_error_status_and_error_object_on_exception(temp_data_dir):
     """LLM call recorded with status=error and error=exception yields error object in payload."""
+
     @trace
     def _run():
         record_llm_call(
@@ -131,6 +142,7 @@ def test_llm_call_records_error_status_and_error_object_on_exception(temp_data_d
 
 def test_success_calls_have_status_ok_and_no_error(temp_data_dir):
     """TOOL_CALL and LLM_CALL success paths have status=ok and error null/absent."""
+
     @trace
     def _run():
         record_tool_call("ok_tool", args={"x": 1}, result="done")
@@ -140,7 +152,9 @@ def test_success_calls_have_status_ok_and_no_error(temp_data_dir):
     config = load_config()
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
-    tool_events = [e for e in events if e.get("event_type") == EventType.TOOL_CALL.value]
+    tool_events = [
+        e for e in events if e.get("event_type") == EventType.TOOL_CALL.value
+    ]
     llm_events = [e for e in events if e.get("event_type") == EventType.LLM_CALL.value]
     assert len(tool_events) >= 1
     assert len(llm_events) >= 1
@@ -154,7 +168,10 @@ def test_success_calls_have_status_ok_and_no_error(temp_data_dir):
 
 def test_record_llm_call_accepts_float_token_counts(temp_data_dir, monkeypatch):
     """record_llm_call with usage containing float token counts normalizes to integers (e.g. 100.0 -> 100)."""
-    monkeypatch.setenv("AGENTDBG_REDACT", "0")  # so usage.*_tokens keys are not redacted
+    monkeypatch.setenv(
+        "AGENTDBG_REDACT", "0"
+    )  # so usage.*_tokens keys are not redacted
+
     @trace
     def _run():
         record_llm_call(
@@ -187,21 +204,29 @@ def test_normalize_usage_accepts_floats_and_mixed_types():
     from agentdbg._tracing._redact import _normalize_usage
 
     # All floats (common from some LLM APIs)
-    out = _normalize_usage({"prompt_tokens": 100.0, "completion_tokens": 50.0, "total_tokens": 150.0})
+    out = _normalize_usage(
+        {"prompt_tokens": 100.0, "completion_tokens": 50.0, "total_tokens": 150.0}
+    )
     assert out == {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150}
 
     # Mixed int and float
-    out = _normalize_usage({"prompt_tokens": 10, "completion_tokens": 20.0, "total_tokens": 30})
+    out = _normalize_usage(
+        {"prompt_tokens": 10, "completion_tokens": 20.0, "total_tokens": 30}
+    )
     assert out == {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
 
     # Missing keys -> None; float truncated to int
-    out = _normalize_usage({"prompt_tokens": 5.7, "completion_tokens": None, "total_tokens": 10})
+    out = _normalize_usage(
+        {"prompt_tokens": 5.7, "completion_tokens": None, "total_tokens": 10}
+    )
     assert out["prompt_tokens"] == 5
     assert out["completion_tokens"] is None
     assert out["total_tokens"] == 10
 
     # Invalid types (e.g. string) -> None for that key
-    out = _normalize_usage({"prompt_tokens": "100", "completion_tokens": 20.0, "total_tokens": 30})
+    out = _normalize_usage(
+        {"prompt_tokens": "100", "completion_tokens": 20.0, "total_tokens": 30}
+    )
     assert out["prompt_tokens"] is None
     assert out["completion_tokens"] == 20
     assert out["total_tokens"] == 30
@@ -247,6 +272,7 @@ def test_traced_run_error_one_error_run_json_error(temp_data_dir):
 
 def test_trace_system_exit_propagates_without_error_recorded(temp_data_dir):
     """SystemExit inside @trace propagates immediately; no ERROR event or RUN_END is written."""
+
     @trace(name="sys_exit_run")
     def _traced_sys_exit():
         raise SystemExit(42)
@@ -288,7 +314,9 @@ def test_traced_run_nested_does_not_create_new_run(temp_data_dir):
     events = load_events(run_id, config)
     run_starts = [e for e in events if e.get("event_type") == EventType.RUN_START.value]
     run_ends = [e for e in events if e.get("event_type") == EventType.RUN_END.value]
-    tool_events = [e for e in events if e.get("event_type") == EventType.TOOL_CALL.value]
+    tool_events = [
+        e for e in events if e.get("event_type") == EventType.TOOL_CALL.value
+    ]
 
     assert len(run_starts) == 1
     assert len(run_ends) == 1
@@ -299,6 +327,7 @@ def test_traced_run_nested_does_not_create_new_run(temp_data_dir):
 
 def test_trace_nested_decorated_uses_outer_run(temp_data_dir):
     """Nested @trace (inner decorated function called from outer) uses the outer run; only one RUN_START and one RUN_END."""
+
     @trace(name="outer_trace")
     def outer():
         record_tool_call("outer_tool", args={}, result="a")
@@ -316,7 +345,9 @@ def test_trace_nested_decorated_uses_outer_run(temp_data_dir):
     events = load_events(run_id, config)
     run_starts = [e for e in events if e.get("event_type") == EventType.RUN_START.value]
     run_ends = [e for e in events if e.get("event_type") == EventType.RUN_END.value]
-    tool_events = [e for e in events if e.get("event_type") == EventType.TOOL_CALL.value]
+    tool_events = [
+        e for e in events if e.get("event_type") == EventType.TOOL_CALL.value
+    ]
     tool_names = [e.get("payload", {}).get("tool_name") for e in tool_events]
 
     assert len(run_starts) == 1
@@ -327,15 +358,20 @@ def test_trace_nested_decorated_uses_outer_run(temp_data_dir):
 
 def test_record_state_inside_trace_writes_state_update_event(temp_data_dir):
     """record_state inside @trace writes one STATE_UPDATE with state and meta to storage."""
+
     @trace
     def _run():
-        record_state(state={"step": 1, "query": "hello"}, meta={"label": "after_search"})
+        record_state(
+            state={"step": 1, "query": "hello"}, meta={"label": "after_search"}
+        )
 
     _run()
     config = load_config()
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
-    state_events = [e for e in events if e.get("event_type") == EventType.STATE_UPDATE.value]
+    state_events = [
+        e for e in events if e.get("event_type") == EventType.STATE_UPDATE.value
+    ]
     assert len(state_events) == 1
     payload = state_events[0].get("payload", {})
     assert payload.get("state") == {"step": 1, "query": "hello"}
@@ -345,6 +381,7 @@ def test_record_state_inside_trace_writes_state_update_event(temp_data_dir):
 
 def test_record_state_with_diff(temp_data_dir):
     """record_state with state and diff stores both in payload."""
+
     @trace
     def _run():
         record_state(state={"count": 2}, diff={"count": 1})
@@ -353,7 +390,9 @@ def test_record_state_with_diff(temp_data_dir):
     config = load_config()
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
-    state_events = [e for e in events if e.get("event_type") == EventType.STATE_UPDATE.value]
+    state_events = [
+        e for e in events if e.get("event_type") == EventType.STATE_UPDATE.value
+    ]
     assert len(state_events) == 1
     payload = state_events[0].get("payload", {})
     assert payload.get("state") == {"count": 2}
@@ -368,5 +407,7 @@ def test_record_state_no_op_outside_trace(temp_data_dir):
     config = load_config()
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
-    state_events = [e for e in events if e.get("event_type") == EventType.STATE_UPDATE.value]
+    state_events = [
+        e for e in events if e.get("event_type") == EventType.STATE_UPDATE.value
+    ]
     assert len(state_events) == 0

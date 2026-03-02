@@ -2,18 +2,22 @@
 Tests for LangChain integration. Skip if langchain is not installed.
 Uses temp dir; no network calls. Asserts TOOL_CALL and LLM_CALL events.
 """
+
 import sys
 
 import pytest
+from tests.conftest import get_latest_run_id
 
+from agentdbg import trace
 from agentdbg.config import load_config
 from agentdbg.events import EventType
-from agentdbg.storage import load_events, load_run_meta
-from tests.conftest import get_latest_run_id
+from agentdbg.storage import load_events
+from agentdbg.integrations.langchain import AgentDbgLangChainCallbackHandler
 
 
 def test_langchain_integration_raises_clear_error_when_deps_missing():
     """When optional deps are missing, integration raises a clear error (no None, no NoneType)."""
+
     # Simulate missing langchain_core: access to .callbacks raises ImportError
     class FakeLangChainCore:
         def __getattr__(self, name: str):
@@ -33,16 +37,25 @@ def test_langchain_integration_raises_clear_error_when_deps_missing():
             from agentdbg.integrations import AgentDbgLangChainCallbackHandler  # noqa: F401
         msg = str(exc_info.value)
         assert "langchain" in msg.lower(), f"message should mention langchain: {msg!r}"
-        assert "pip install" in msg.lower(), f"message should mention pip install: {msg!r}"
-        assert "[langchain]" in msg, f"message should mention extra [langchain]: {msg!r}"
+        assert "pip install" in msg.lower(), (
+            f"message should mention pip install: {msg!r}"
+        )
+        assert "[langchain]" in msg, (
+            f"message should mention extra [langchain]: {msg!r}"
+        )
     finally:
-        for key in ("langchain_core", "agentdbg.integrations.langchain", "agentdbg.integrations"):
+        for key in (
+            "langchain_core",
+            "agentdbg.integrations.langchain",
+            "agentdbg.integrations",
+        ):
             sys.modules.pop(key, None)
         sys.modules.update(to_restore)
 
 
 def test_langchain_integration_does_not_break_core_import():
     """Core agentdbg import must not crash when LangChain optional deps are missing."""
+
     class FakeLangChainCore:
         def __getattr__(self, name: str):
             raise ImportError("No module named 'langchain_core.callbacks'")
@@ -55,6 +68,7 @@ def test_langchain_integration_does_not_break_core_import():
     try:
         sys.modules["langchain_core"] = FakeLangChainCore()
         import agentdbg  # noqa: F401
+
         assert agentdbg.__version__
     finally:
         sys.modules.pop("langchain_core", None)
@@ -64,9 +78,6 @@ def test_langchain_integration_does_not_break_core_import():
 
 
 pytest.importorskip("langchain_core")
-
-from agentdbg import trace
-from agentdbg.integrations.langchain import AgentDbgLangChainCallbackHandler
 
 
 @trace
@@ -96,7 +107,9 @@ def test_langchain_handler_emits_tool_call_and_llm_call(temp_data_dir):
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
 
-    tool_events = [e for e in events if e.get("event_type") == EventType.TOOL_CALL.value]
+    tool_events = [
+        e for e in events if e.get("event_type") == EventType.TOOL_CALL.value
+    ]
     llm_events = [e for e in events if e.get("event_type") == EventType.LLM_CALL.value]
 
     assert len(tool_events) >= 1, "expected at least one TOOL_CALL"
@@ -107,7 +120,9 @@ def test_langchain_handler_emits_tool_call_and_llm_call(temp_data_dir):
     assert tool_payload.get("status") == "ok"
 
     llm_payload = llm_events[0].get("payload", {})
-    assert llm_payload.get("model") is not None or "model" in llm_payload, "LLM_CALL should have model"
+    assert llm_payload.get("model") is not None or "model" in llm_payload, (
+        "LLM_CALL should have model"
+    )
 
 
 def test_langchain_handler_tool_error_emits_error_status(temp_data_dir):
@@ -132,13 +147,16 @@ def test_langchain_handler_tool_error_emits_error_status(temp_data_dir):
     run_id = get_latest_run_id(config)
     events = load_events(run_id, config)
     error_tools = [
-        e for e in events
+        e
+        for e in events
         if e.get("event_type") == EventType.TOOL_CALL.value
         and (e.get("payload") or {}).get("status") == "error"
     ]
 
     assert len(error_tools) >= 1, "expected at least one TOOL_CALL with status=error"
     err = error_tools[0].get("payload", {}).get("error")
-    assert err is not None and isinstance(err, dict), "error should be structured object"
+    assert err is not None and isinstance(err, dict), (
+        "error should be structured object"
+    )
     assert err.get("error_type") == "ValueError"
     assert "simulated failure" in str(err.get("message", ""))
