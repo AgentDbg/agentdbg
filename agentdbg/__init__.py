@@ -7,7 +7,7 @@ from agentdbg.tracing import (
     trace,
     traced_run,
 )
-from agentdbg.version import version as __version__
+from agentdbg._version import version as __version__
 
 __all__ = [
     "trace",

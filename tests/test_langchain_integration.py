@@ -12,7 +12,13 @@ from agentdbg import trace
 from agentdbg.config import load_config
 from agentdbg.events import EventType
 from agentdbg.storage import load_events
-from agentdbg.integrations.langchain import AgentDbgLangChainCallbackHandler
+
+try:
+    from agentdbg.integrations.langchain import AgentDbgLangChainCallbackHandler
+
+    LANGCHAIN_MISSING = False
+except ImportError:
+    LANGCHAIN_MISSING = True
 
 
 def test_langchain_integration_raises_clear_error_when_deps_missing():
@@ -77,9 +83,6 @@ def test_langchain_integration_does_not_break_core_import():
                 sys.modules[k] = v
 
 
-pytest.importorskip("langchain_core")
-
-
 @trace
 def _traced_with_handler():
     """Run one tool and one LLM via handler so events are recorded."""
@@ -99,6 +102,7 @@ def _traced_with_handler():
     llm.invoke("prompt", config=config)
 
 
+@pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
 def test_langchain_handler_emits_tool_call_and_llm_call(temp_data_dir):
     """With langchain installed, traced run with handler produces TOOL_CALL and LLM_CALL."""
     _traced_with_handler()
@@ -125,6 +129,7 @@ def test_langchain_handler_emits_tool_call_and_llm_call(temp_data_dir):
     )
 
 
+@pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
 def test_langchain_handler_tool_error_emits_error_status(temp_data_dir):
     """Simulate tool error callback; record_tool_call is called with status=error."""
     handler = AgentDbgLangChainCallbackHandler()

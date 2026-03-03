@@ -3,16 +3,36 @@ name = "agentdbg"
 dynamic = ["version"]
 description = "Local-first debugger for AI agents (traces, timeline UI, loop warnings)."
 readme = "README.md"
+license = "Apache-2.0"
+license-files = [ "LICENSE" ]
 authors = [
     { name = "Zafar", email = "z.tahirov@gmail.com" }
 ]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "fastapi>=0.129.0",
-    "pyyaml>=6.0.3",
-    "typer>=0.23.1",
-    "uvicorn>=0.40.0",
+    "fastapi>=0.135.0,<0.136.0",
+    "pyyaml>=6.0.3,<6.1.0",
+    "typer>=0.23.0,<0.24.0",
+    "uvicorn>=0.41.0,<0.42.0",
 ]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Debuggers",
+
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Repository = "https://github.com/AgentDbg/AgentDbg"
+
+[project.scripts]
+agentdbg = "agentdbg.cli:main"
 
 [dependency-groups]
 dev = [
@@ -31,9 +51,6 @@ examples = [
     "minimal-examples @ {root:uri}/examples/minimal",
 ]
 
-[project.scripts]
-agentdbg = "agentdbg.cli:main"
-
 [build-system]
 # Wheel/sdist include agentdbg/ (and thus agentdbg/ui_static/) by default.
 # Do not add only-include or only-packages that would exclude ui_static.
@@ -41,7 +58,7 @@ requires = ["hatchling>=1.28.0,<1.29.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "agentdbg/version.py"
+path = "agentdbg/_version.py"
 pattern = "^version = \"(?P<version>.*)\"$"
 
 [tool.pytest.ini_options]
