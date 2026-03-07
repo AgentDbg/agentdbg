@@ -21,8 +21,10 @@ wheels/
 *.egg-info
 
 # Test files
-.coverage
-coverage.xml
+.coverage/
+.pytest_cache/
+.ruff_cache/
+**/coverage.xml
 
 # Virtual environments
 .venv
