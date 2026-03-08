@@ -45,7 +45,11 @@ dev = [
 
 [project.optional-dependencies]
 langchain = ["langchain>=1.2.10"]
-crewai = ["crewai[tools]>=1.9.3"]
+# crewai doesn't support latest OpenAI Agents SDK
+crewai = ["crewai[tools]>=1.6.1"]
+openai = [
+    "openai-agents>=0.10.5",
+]
 
 [build-system]
 # Wheel/sdist include agentdbg/ (and thus agentdbg/ui_static/) by default.

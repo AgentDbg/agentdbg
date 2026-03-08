@@ -7,6 +7,7 @@ import importlib
 __lazy_imports__ = {
     "crewai": ("agentdbg.integrations.crewai", None),
     "langchain": ("agentdbg.integrations.langchain", None),
+    "openai_agents": ("agentdbg.integrations.openai_agents", None),
     "AgentDbgLangChainCallbackHandler": (
         "agentdbg.integrations.langchain",
         "AgentDbgLangChainCallbackHandler",
