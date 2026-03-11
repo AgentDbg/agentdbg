@@ -9,7 +9,12 @@ from agentdbg.tracing import (
     trace,
     traced_run,
 )
-from agentdbg._version import version as __version__
+
+try:
+    from agentdbg._version import version as __version__
+except ImportError:
+    # No version file was venerated; use dev default
+    __version__ = "0.0.0dev+default"
 
 __all__ = [
     "AgentDbgGuardrailExceeded",
