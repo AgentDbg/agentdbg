@@ -46,7 +46,11 @@ dev = [
 [project.optional-dependencies]
 langchain = ["langchain>=1.2.10"]
 # crewai doesn't support latest OpenAI Agents SDK
-crewai = ["crewai[tools]>=1.6.1"]
+crewai = [
+  "crewai[tools]>=1.6.1",
+  "onnxruntime>=1.22.1,<1.23.0; python_version<='3.10'",
+  "onnxruntime>=1.23.0; python_version>='3.11' and python_version<'3.14'",
+]
 openai = [
     "openai-agents>=0.10.5",
 ]
