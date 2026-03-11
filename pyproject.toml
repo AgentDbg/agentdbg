@@ -72,16 +72,4 @@ distance-dirty = "{base_version}.post{distance}+local"
 file = "agentdbg/_version.py"
 template = """
 # This file is managed by dynamic versioning. Do not edit manually.
-version = "{version}""""
-
-# [tool.hatch.build]
-
-
-[tool.pytest.ini_options]
-addopts = "-ra"
-strict_markers = true
-markers = [
-  "slow: slower tests (excluded from fast CI)",
-  "long: long-running tests (excluded from fast CI)",
-  "longrunning: very long-running tests (excluded from fast CI)",
-]
+version = '{version}'"""

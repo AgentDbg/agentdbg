@@ -1,0 +1,8 @@
+[pytest]
+addopts = ["-ra"]
+strict_markers = true
+markers = [
+  "slow: slower tests (excluded from fast CI)",
+  "long: long-running tests (excluded from fast CI)",
+  "longrunning: very long-running tests (excluded from fast CI)",
+]
