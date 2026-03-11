@@ -16,8 +16,8 @@ In under 10 minutes, you can inspect a full execution timeline with inputs, outp
 
 **Built-in run guardrails:** stop runaway debug sessions when an agent starts looping or exceeds your limits for LLM calls, tool calls, total events, or duration.
 
-<!-- ![Dashboard Brag](https://github.com/AgentDbg/AgentDbg/blob/main/docs/assets/guardrails.gif?raw=True) -->
-![Dashboard Brag](docs/assets/guardrails.gif)
+![Dashboard Brag](https://github.com/AgentDbg/AgentDbg/blob/main/docs/assets/guardrails.gif?raw=True)
+<!-- ![Dashboard Brag](docs/assets/guardrails.gif) -->
 
 ## Get running in 5 minutes
 
@@ -49,8 +49,8 @@ agentdbg view
 
 A browser tab opens at `http://127.0.0.1:8712` showing the full run timeline - every event, with inputs, outputs, and timing. The viewer stays running: run more agents and their timelines appear automatically.
 
-<!-- ![Pure Pythonic Agent Timeline UI](https://github.com/AgentDbg/AgentDbg/blob/main/docs/assets/timeline-pure-python.gif?raw=True) -->
-![Pure Pythonic Agent Timeline UI](docs/assets/timeline-pure-python.gif)
+![Pure Pythonic Agent Timeline UI](https://github.com/AgentDbg/AgentDbg/blob/main/docs/assets/timeline-pure-python.gif?raw=True)
+<!-- ![Pure Pythonic Agent Timeline UI](docs/assets/timeline-pure-python.gif) -->
 
 That's it. You're debugging.
 
