@@ -407,3 +407,80 @@ def test_max_duration_s_zero_triggers_immediately(temp_data_dir, monkeypatch):
 
     assert exc_info.value.guardrail == "max_duration_s"
     assert exc_info.value.threshold == 0.0
+
+
+# ---------------------------------------------------------------------------
+# LOOP_WARNING deduplication (regression: duplicate warnings when stop_on_loop
+# raises an exception that is caught by the calling framework)
+# ---------------------------------------------------------------------------
+
+
+def test_loop_warning_dedup_no_guardrail_emits_one_per_pattern(temp_data_dir):
+    """With stop_on_loop=False, a long repeated sequence emits exactly one
+    LOOP_WARNING per distinct pattern, not one per detection opportunity."""
+
+    @trace(name="dedup-no-guardrail")
+    def run_long_loop():
+        for _ in range(6):
+            record_llm_call("m", prompt="p", response="r")
+            record_tool_call("t", args={}, result=None)
+
+    run_long_loop()
+
+    config = load_config()
+    run_id = get_latest_run_id(config)
+    events = load_events(run_id, config)
+    run_meta = load_run_meta(run_id, config)
+
+    loop_warnings = [
+        e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value
+    ]
+    patterns = {e["payload"]["pattern"] for e in loop_warnings}
+    assert len(patterns) <= 2, f"at most 2 distinct patterns, got {patterns}"
+    assert len(loop_warnings) == len(patterns), (
+        f"expected one LOOP_WARNING per distinct pattern, got {len(loop_warnings)} "
+        f"warnings for {len(patterns)} patterns"
+    )
+    assert run_meta["counts"]["loop_warnings"] == len(loop_warnings)
+    assert run_meta["status"] == "ok"
+
+
+def test_loop_warning_dedup_with_stop_on_loop_emits_minimal_warnings(temp_data_dir):
+    """With stop_on_loop=True, the first qualifying LOOP_WARNING triggers
+    AgentDbgLoopAbort.  Even if the caller catches the exception and keeps
+    emitting events (simulating the OpenAI Agents SDK behaviour), subsequent
+    detections of already-emitted patterns must NOT produce extra LOOP_WARNINGs."""
+
+    @trace(
+        name="dedup-with-guardrail",
+        stop_on_loop=True,
+        stop_on_loop_min_repetitions=3,
+    )
+    def run_loop_swallowing_abort():
+        for _ in range(6):
+            try:
+                record_llm_call("m", prompt="p", response="r")
+            except AgentDbgLoopAbort:
+                pass
+            try:
+                record_tool_call("t", args={}, result=None)
+            except AgentDbgLoopAbort:
+                pass
+
+    run_loop_swallowing_abort()
+
+    config = load_config()
+    run_id = get_latest_run_id(config)
+    events = load_events(run_id, config)
+    run_meta = load_run_meta(run_id, config)
+
+    loop_warnings = [
+        e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value
+    ]
+    patterns = {e["payload"]["pattern"] for e in loop_warnings}
+    assert len(loop_warnings) == len(patterns), (
+        f"each pattern should produce exactly one LOOP_WARNING, "
+        f"got {len(loop_warnings)} warnings for {len(patterns)} patterns"
+    )
+    assert len(loop_warnings) <= 2
+    assert run_meta["counts"]["loop_warnings"] == len(loop_warnings)

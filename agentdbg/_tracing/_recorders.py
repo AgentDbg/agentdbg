@@ -40,9 +40,14 @@ def _maybe_emit_loop_warning(
         pattern if len(pattern) <= max_name_len else pattern[: max_name_len - 1] + "..."
     )
     ev = new_event(EventType.LOOP_WARNING, run_id, name, payload)
-    _append_event_and_check_guardrails(run_id, ev, config, counts)
-    counts["loop_warnings"] = counts.get("loop_warnings", 0) + 1
+    # Record the dedup key and increment the count BEFORE the guardrail
+    # check.  _append_event_and_check_guardrails may raise AgentDbgLoopAbort
+    # when stop_on_loop is enabled; if the calling framework swallows that
+    # exception (e.g. OpenAI Agents SDK), subsequent spans would re-trigger
+    # the same detection and emit duplicate LOOP_WARNINGs.
     emitted.add(key)
+    counts["loop_warnings"] = counts.get("loop_warnings", 0) + 1
+    _append_event_and_check_guardrails(run_id, ev, config, counts)
 
 
 def record_llm_call(

@@ -240,6 +240,13 @@ def test_langchain_handler_guardrail_propagates_via_raise_error(temp_data_dir):
     run_end_payload = events[-1].get("payload", {})
     assert run_end_payload.get("status") == "error"
 
+    loop_warnings = [e for e in events if e.get("event_type") == "LOOP_WARNING"]
+    patterns = {e["payload"]["pattern"] for e in loop_warnings}
+    assert len(loop_warnings) == len(patterns), (
+        f"each pattern should produce at most one LOOP_WARNING, "
+        f"got {len(loop_warnings)} warnings for {len(patterns)} patterns"
+    )
+
 
 @pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
 def test_langchain_handler_resets_raise_error_on_new_run(temp_data_dir):

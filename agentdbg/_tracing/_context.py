@@ -201,14 +201,14 @@ def _ensure_run() -> tuple[str, dict, AgentDbgConfig, list[dict], set[str]] | No
         config = _config_var.get()
         if counts is not None and config is not None:
             window = _event_window_var.get()
+            if window is None:
+                window = []
+                _event_window_var.set(window)
             emitted = _loop_emitted_var.get()
-            return (
-                run_id,
-                counts,
-                config,
-                window if window is not None else [],
-                emitted if emitted is not None else set(),
-            )
+            if emitted is None:
+                emitted = set()
+                _loop_emitted_var.set(emitted)
+            return (run_id, counts, config, window, emitted)
     if os.environ.get("AGENTDBG_IMPLICIT_RUN", "").strip() == "1":
         if (
             _implicit_run_id is not None

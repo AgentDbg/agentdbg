@@ -371,3 +371,85 @@ def test_abort_exception_resets_on_new_trace(openai_agents_module):
 
     processor.on_trace_start(SimpleNamespace(trace_id="new_trace"))
     assert processor.abort_exception is None
+
+
+# ---------------------------------------------------------------------------
+# End-to-end LOOP_WARNING deduplication regression test
+# ---------------------------------------------------------------------------
+
+
+def test_loop_warning_dedup_with_openai_agents_adapter(
+    openai_agents_module, temp_data_dir
+):
+    """Simulates the OpenAI Agents SDK behaviour where the SDK catches and
+    swallows AgentDbgLoopAbort from on_span_end.  After the fix, even when the
+    exception is swallowed and more spans flow in, each distinct loop pattern
+    should produce at most one LOOP_WARNING in the trace."""
+    openai_agents, tracing_module, span_data = openai_agents_module
+    from agentdbg import trace
+    from agentdbg.config import load_config
+    from agentdbg.events import EventType
+    from agentdbg.exceptions import AgentDbgLoopAbort
+    from agentdbg.storage import load_events, load_run_meta
+    from tests.conftest import get_latest_run_id
+
+    processor = openai_agents.PROCESSOR
+
+    def _emit_span(sd, *, error=None):
+        span = _fake_span(sd, error=error)
+        try:
+            tracing_module.emit_span(span)
+        except Exception:
+            pass
+
+    @trace(
+        name="openai-agents-dedup-regression",
+        stop_on_loop=True,
+        stop_on_loop_min_repetitions=3,
+    )
+    def run_openai_agents_looping():
+        processor.on_trace_start(SimpleNamespace(trace_id="trace_dedup_test"))
+        for _ in range(5):
+            _emit_span(
+                span_data.GenerationSpanData(
+                    input=[{"role": "user", "content": "Find sales"}],
+                    output=[{"role": "assistant", "content": "search again"}],
+                    model="gpt-4o-mini",
+                    usage={
+                        "prompt_tokens": 6,
+                        "completion_tokens": 6,
+                        "total_tokens": 12,
+                    },
+                )
+            )
+            _emit_span(
+                span_data.FunctionSpanData(
+                    name="search",
+                    input={"query": "quarterly sales"},
+                    output={"data": "Q1: 1.2M"},
+                )
+            )
+        processor.raise_if_aborted()
+
+    with pytest.raises(AgentDbgLoopAbort):
+        run_openai_agents_looping()
+
+    config = load_config()
+    run_id = get_latest_run_id(config)
+    events = load_events(run_id, config)
+    run_meta = load_run_meta(run_id, config)
+
+    loop_warnings = [
+        e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value
+    ]
+    patterns = {e["payload"]["pattern"] for e in loop_warnings}
+    assert len(loop_warnings) == len(patterns), (
+        f"each distinct pattern should emit exactly one LOOP_WARNING; "
+        f"got {len(loop_warnings)} warnings for {len(patterns)} patterns: {patterns}"
+    )
+    assert len(loop_warnings) <= 2
+    assert run_meta["counts"]["loop_warnings"] == len(loop_warnings)
+
+    errors = [e for e in events if e.get("event_type") == EventType.ERROR.value]
+    assert len(errors) == 1
+    assert errors[0]["payload"]["guardrail"] == "stop_on_loop"
