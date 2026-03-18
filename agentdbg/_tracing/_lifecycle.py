@@ -13,7 +13,7 @@ from typing import Any, Callable, Generator, ParamSpec, TypeVar
 from agentdbg.config import load_config
 from agentdbg.constants import default_counts
 from agentdbg.events import EventType, new_event
-from agentdbg.exceptions import AgentDbgGuardrailExceeded
+from agentdbg.exceptions import AgentDbgGuardrailExceeded, _AgentDbgAbortSignal
 from agentdbg.guardrails import GuardrailParams, merge_guardrail_params
 from agentdbg.storage import append_event, create_run, finalize_run
 
@@ -75,7 +75,18 @@ def _run_context(
     """
     existing_run_id = _run_id_var.get()
     if existing_run_id is not None:
-        yield
+        # Nested context: reuse the existing run.  If the caller supplied
+        # guardrail_params (e.g. traced_run(stop_on_loop=True) inside @trace),
+        # apply them for the duration of this block so they aren't silently
+        # discarded.
+        if guardrail_params is not None:
+            token_nested = _guardrail_params_var.set(guardrail_params)
+            try:
+                yield
+            finally:
+                _guardrail_params_var.reset(token_nested)
+        else:
+            yield
         return
 
     config = load_config()
@@ -115,6 +126,15 @@ def _run_context(
         _append_event_and_check_guardrails(run_id, ev, config, counts)
         _invoke_run_enter()
         yield
+    except _AgentDbgAbortSignal as signal:
+        exc_info = sys.exc_info()
+        cause = signal.cause
+        err_payload = _redact_and_truncate(_guardrail_error_payload(cause), config)
+        err_ev = new_event(EventType.ERROR, run_id, type(cause).__name__, err_payload)
+        append_event(run_id, err_ev, config)
+        counts["errors"] = counts.get("errors", 0) + 1
+        _finish_run("error")
+        raise cause from signal
     except AgentDbgGuardrailExceeded as e:
         exc_info = sys.exc_info()
         err_payload = _redact_and_truncate(_guardrail_error_payload(e), config)

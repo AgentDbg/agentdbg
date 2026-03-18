@@ -6,7 +6,7 @@ Uses only AgentDbg SDK: record_llm_call, record_tool_call. No CLI or server impo
 
 from typing import Any
 
-from agentdbg.exceptions import AgentDbgGuardrailExceeded
+from agentdbg.exceptions import AgentDbgGuardrailExceeded, _AgentDbgAbortSignal
 from agentdbg.tracing import record_llm_call, record_tool_call
 from agentdbg.integrations._error import MissingOptionalDependencyError
 
@@ -131,6 +131,11 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         if self._abort_exception is not None:
             raise self._abort_exception
 
+    def reset(self) -> None:
+        """Clear abort state so the handler can be reused for a new run."""
+        self._abort_exception = None
+        self.raise_error = False
+
     def _key(self, run_id: Any = None, parent_run_id: Any = None, **kwargs: Any) -> str:
         """Composite key for pending calls; reduces collisions and handles missing run_id."""
         if run_id is not None:
@@ -139,6 +144,15 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
             return f"parent:{parent_run_id}"
         self._key_counter += 1
         return f"fallback:{self._key_counter}"
+
+    def _check_aborted(self) -> None:
+        """If a guardrail abort was already triggered, raise
+        _AgentDbgAbortSignal (BaseException) so it bypasses framework-level
+        ``except Exception`` handlers (e.g. LangGraph's graph executor) and
+        propagates all the way out to the traced_run context manager."""
+        if self._abort_exception is not None:
+            self.raise_error = True
+            raise _AgentDbgAbortSignal(self._abort_exception)
 
     def on_llm_start(
         self,
@@ -149,9 +163,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         parent_run_id: Any = None,
         **kwargs: Any,
     ) -> None:
-        if parent_run_id is None:
-            self._abort_exception = None
-            self.raise_error = False
+        self._check_aborted()
         key = self._key(run_id=run_id, parent_run_id=parent_run_id, **kwargs)
         self._pending_llm[key] = {
             "model": _model_from_serialized(serialized),
@@ -167,6 +179,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         parent_run_id: Any = None,
         **kwargs: Any,
     ) -> None:
+        self._check_aborted()
         key = self._key(run_id=run_id, parent_run_id=parent_run_id, **kwargs)
         self._pending_llm[key] = {
             "model": _model_from_serialized(serialized),
@@ -197,7 +210,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         except AgentDbgGuardrailExceeded as e:
             self._abort_exception = e
             self.raise_error = True
-            raise
+            raise _AgentDbgAbortSignal(e) from e
 
     def on_llm_error(
         self,
@@ -211,15 +224,20 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         pending = self._pending_llm.pop(key, None)
         model = (pending or {}).get("model") or "unknown"
         prompt = (pending or {}).get("prompt") if pending else None
-        record_llm_call(
-            model=model,
-            prompt=prompt,
-            response=None,
-            usage=None,
-            status="error",
-            error=error,
-            provider="langchain",
-        )
+        try:
+            record_llm_call(
+                model=model,
+                prompt=prompt,
+                response=None,
+                usage=None,
+                status="error",
+                error=error,
+                provider="langchain",
+            )
+        except AgentDbgGuardrailExceeded as e:
+            self._abort_exception = e
+            self.raise_error = True
+            raise _AgentDbgAbortSignal(e) from e
 
     def on_tool_start(
         self,
@@ -230,6 +248,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         parent_run_id: Any = None,
         **kwargs: Any,
     ) -> None:
+        self._check_aborted()
         key = self._key(run_id=run_id, parent_run_id=parent_run_id, **kwargs)
         name = _tool_name_from_serialized(serialized)
         try:
@@ -257,7 +276,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         except AgentDbgGuardrailExceeded as e:
             self._abort_exception = e
             self.raise_error = True
-            raise
+            raise _AgentDbgAbortSignal(e) from e
 
     def on_tool_error(
         self,
@@ -271,4 +290,11 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         pending = self._pending_tool.pop(key, None)
         name = (pending or {}).get("name", "unknown")
         args = (pending or {}).get("args") if pending else None
-        record_tool_call(name=name, args=args, result=None, status="error", error=error)
+        try:
+            record_tool_call(
+                name=name, args=args, result=None, status="error", error=error
+            )
+        except AgentDbgGuardrailExceeded as e:
+            self._abort_exception = e
+            self.raise_error = True
+            raise _AgentDbgAbortSignal(e) from e

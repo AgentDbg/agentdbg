@@ -484,3 +484,78 @@ def test_loop_warning_dedup_with_stop_on_loop_emits_minimal_warnings(temp_data_d
     )
     assert len(loop_warnings) <= 2
     assert run_meta["counts"]["loop_warnings"] == len(loop_warnings)
+
+
+def test_stop_on_loop_re_raises_after_swallowed_abort(temp_data_dir):
+    """When stop_on_loop=True and the framework swallows AgentDbgLoopAbort,
+    subsequent detections of the same pattern must keep raising the abort
+    (without emitting duplicate LOOP_WARNING events)."""
+
+    abort_count = 0
+
+    @trace(
+        name="re-raise-after-swallow",
+        stop_on_loop=True,
+        stop_on_loop_min_repetitions=3,
+    )
+    def run_loop_counting_aborts():
+        nonlocal abort_count
+        for _ in range(6):
+            try:
+                record_llm_call("m", prompt="p", response="r")
+            except AgentDbgLoopAbort:
+                abort_count += 1
+            try:
+                record_tool_call("t", args={}, result=None)
+            except AgentDbgLoopAbort:
+                abort_count += 1
+
+    run_loop_counting_aborts()
+
+    assert abort_count > 1, (
+        f"expected multiple AgentDbgLoopAbort raises when framework keeps "
+        f"swallowing, got {abort_count}"
+    )
+
+    config = load_config()
+    run_id = get_latest_run_id(config)
+    events = load_events(run_id, config)
+
+    loop_warnings = [
+        e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value
+    ]
+    patterns = {e["payload"]["pattern"] for e in loop_warnings}
+    assert len(loop_warnings) == len(patterns), (
+        "dedup must still prevent duplicate LOOP_WARNING events"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Nested traced_run guardrail params
+# ---------------------------------------------------------------------------
+
+
+def test_nested_traced_run_applies_guardrail_params(temp_data_dir):
+    """traced_run(stop_on_loop=True) inside @trace (which defaults to
+    stop_on_loop=False) must apply the inner guardrail params."""
+
+    @trace(name="outer-no-stop")
+    def run_outer():
+        with traced_run(stop_on_loop=True, stop_on_loop_min_repetitions=3):
+            for _ in range(3):
+                record_tool_call("foo", args={}, result=None)
+                record_llm_call("gpt", prompt="p", response="r")
+
+    with pytest.raises(AgentDbgLoopAbort):
+        run_outer()
+
+    config = load_config()
+    run_id = get_latest_run_id(config)
+    events = load_events(run_id, config)
+
+    loop_warnings = [
+        e for e in events if e.get("event_type") == EventType.LOOP_WARNING.value
+    ]
+    assert len(loop_warnings) >= 1, (
+        "nested traced_run with stop_on_loop=True should emit LOOP_WARNING"
+    )

@@ -6,6 +6,20 @@ and re-raises so the caller can handle the abort.
 """
 
 
+class _AgentDbgAbortSignal(BaseException):
+    """Internal BaseException used by integration handlers to bypass framework
+    error handling (e.g. LangGraph's ``except Exception``).
+
+    Not part of the public API.  The ``_run_context`` lifecycle catches this
+    signal, records ERROR + RUN_END, and re-raises the wrapped
+    ``AgentDbgGuardrailExceeded`` so callers see the normal exception type.
+    """
+
+    def __init__(self, cause: "AgentDbgGuardrailExceeded") -> None:
+        super().__init__(str(cause))
+        self.cause = cause
+
+
 class AgentDbgGuardrailExceeded(Exception):
     """
     Raised when a guardrail limit is exceeded (stop_on_loop, max_llm_calls, etc.).

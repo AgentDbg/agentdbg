@@ -7,9 +7,14 @@ from typing import Any
 
 from agentdbg.config import AgentDbgConfig
 from agentdbg.events import EventType, new_event
+from agentdbg.exceptions import AgentDbgLoopAbort
 from agentdbg.loopdetect import detect_loop, pattern_key as loop_pattern_key
 
-from agentdbg._tracing._context import _append_event_and_check_guardrails, _ensure_run
+from agentdbg._tracing._context import (
+    _append_event_and_check_guardrails,
+    _ensure_run,
+    _guardrail_params_var,
+)
 from agentdbg._tracing._redact import (
     _apply_redaction_truncation,
     _build_error_payload,
@@ -33,6 +38,24 @@ def _maybe_emit_loop_warning(
         return
     key = loop_pattern_key(payload)
     if key in emitted:
+        # Pattern already emitted — no duplicate event.  But if stop_on_loop
+        # is active the previous AgentDbgLoopAbort may have been swallowed by
+        # the calling framework (e.g. LangChain, OpenAI Agents SDK).  Re-raise
+        # so the loop keeps being interrupted on every detection opportunity.
+        params = _guardrail_params_var.get()
+        if params is not None and params.stop_on_loop:
+            repetitions = payload.get("repetitions", 0)
+            if repetitions >= params.stop_on_loop_min_repetitions:
+                raise AgentDbgLoopAbort(
+                    threshold=params.stop_on_loop_min_repetitions,
+                    actual=repetitions,
+                    message=(
+                        f"guardrail stop_on_loop: loop re-detected after previous "
+                        f"abort was swallowed (repetitions {repetitions} >= "
+                        f"stop_on_loop_min_repetitions "
+                        f"{params.stop_on_loop_min_repetitions})"
+                    ),
+                )
         return
     pattern = payload.get("pattern", "loop_warning")
     max_name_len = 80

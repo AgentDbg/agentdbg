@@ -12,7 +12,11 @@ from tests.conftest import get_latest_run_id
 from agentdbg import trace
 from agentdbg.config import load_config
 from agentdbg.events import EventType
-from agentdbg.exceptions import AgentDbgGuardrailExceeded, AgentDbgLoopAbort
+from agentdbg.exceptions import (
+    AgentDbgGuardrailExceeded,
+    AgentDbgLoopAbort,
+    _AgentDbgAbortSignal,
+)
 from agentdbg.storage import load_events
 
 try:
@@ -249,11 +253,16 @@ def test_langchain_handler_guardrail_propagates_via_raise_error(temp_data_dir):
 
 
 @pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
-def test_langchain_handler_resets_raise_error_on_new_run(temp_data_dir):
-    """A reused handler resets raise_error and abort_exception on a new top-level run."""
+def test_langchain_handler_resets_via_reset_method(temp_data_dir):
+    """A reused handler resets raise_error and abort_exception via reset()."""
     handler = AgentDbgLangChainCallbackHandler()
     handler.raise_error = True
     handler._abort_exception = AgentDbgLoopAbort(threshold=3, actual=3, message="old")
+
+    handler.reset()
+
+    assert handler.raise_error is False, "raise_error should reset after reset()"
+    assert handler.abort_exception is None, "abort_exception should reset after reset()"
 
     @trace
     def _run():
@@ -273,5 +282,60 @@ def test_langchain_handler_resets_raise_error_on_new_run(temp_data_dir):
 
     _run()
 
-    assert handler.raise_error is False, "raise_error should reset on new run"
-    assert handler.abort_exception is None, "abort_exception should reset on new run"
+    assert handler.raise_error is False
+    assert handler.abort_exception is None
+
+
+@pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
+def test_langchain_handler_blocks_after_abort(temp_data_dir):
+    """Once a guardrail fires, subsequent on_llm_start / on_tool_start
+    raise _AgentDbgAbortSignal (BaseException) so it bypasses framework-level
+    ``except Exception`` handlers and propagates out."""
+    handler = AgentDbgLangChainCallbackHandler()
+    handler._abort_exception = AgentDbgLoopAbort(threshold=3, actual=3, message="loop")
+
+    with pytest.raises(_AgentDbgAbortSignal) as exc_info:
+        handler.on_llm_start({"id": ["ChatFake"]}, ["hello"], run_id="llm-1")
+    assert isinstance(exc_info.value.cause, AgentDbgLoopAbort)
+    assert handler.raise_error is True
+
+    handler.raise_error = False
+    with pytest.raises(_AgentDbgAbortSignal):
+        handler.on_chat_model_start({"id": ["ChatFake"]}, [[]], run_id="llm-2")
+    assert handler.raise_error is True
+
+    handler.raise_error = False
+    with pytest.raises(_AgentDbgAbortSignal):
+        handler.on_tool_start({"name": "t"}, "{}", run_id="tool-1")
+    assert handler.raise_error is True
+
+
+@pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
+def test_langchain_handler_on_llm_error_propagates_guardrail(temp_data_dir):
+    """AgentDbgGuardrailExceeded raised inside on_llm_error wraps in
+    _AgentDbgAbortSignal so it bypasses framework error handling and
+    propagates to _run_context which unwraps it to AgentDbgLoopAbort."""
+    handler = AgentDbgLangChainCallbackHandler()
+
+    @trace(stop_on_loop=True, stop_on_loop_min_repetitions=3)
+    def _run():
+        for i in range(6):
+            _simulate_langchain_handle_event(
+                handler,
+                "on_llm_start",
+                {"id": ["ChatFake"]},
+                ["prompt"],
+                run_id=f"llm-{i}",
+            )
+            _simulate_langchain_handle_event(
+                handler,
+                "on_llm_error",
+                ValueError("model failed"),
+                run_id=f"llm-{i}",
+            )
+
+    with pytest.raises(AgentDbgLoopAbort):
+        _run()
+
+    assert handler.raise_error is True
+    assert handler.abort_exception is not None
