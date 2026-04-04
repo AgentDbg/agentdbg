@@ -115,6 +115,7 @@ h1 { font-size: 1.25rem; margin: 0 0 1rem 0; color: var(--accent); }
   text-transform: uppercase;
 }
 .summary-status-strip .status-badge.ok { background: rgba(34, 139, 34, 0.3); border: 1px solid #2e8b2e; color: #7cfc7c; }
+.summary-status-strip .status-badge.warning { background: var(--warning-bg); border: 1px solid var(--warning-border); color: #e8c547; }
 .summary-status-strip .status-badge.error { background: var(--error-bg); border: 1px solid var(--error-border); color: #ff8888; }
 .summary-status-strip .status-badge.running { background: rgba(77, 171, 247, 0.2); border: 1px solid var(--accent); color: var(--accent); }
 .summary-status-strip .run-name { font-weight: 600; font-size: 1rem; }

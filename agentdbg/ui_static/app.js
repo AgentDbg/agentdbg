@@ -292,13 +292,27 @@ function escapeHtml(s) {
   return escapeDiv.innerHTML;
 }
 
+/**
+ * UI status for a run: completed ok with any loop warning counts as "warning"
+ * (run.json still stores status "ok"; list + summary show warning).
+ */
+function effectiveRunUiStatus(run) {
+  const raw = (run.status || '').toLowerCase();
+  if (raw === 'running') return 'running';
+  if (raw === 'error') return 'error';
+  const lw = run.counts && run.counts.loop_warnings != null ? Number(run.counts.loop_warnings) : 0;
+  if (lw > 0 && (raw === 'ok' || raw === '')) return 'warning';
+  return raw === 'ok' || raw === '' ? 'ok' : raw;
+}
+
 /** Build one sidebar run item element (shared by loadRuns and mergeRunListIntoSidebar). */
 function buildRunItemEl(run) {
   const div = document.createElement('div');
   div.className = 'run-item' + (run.status === 'running' ? ' running' : '');
   div.dataset.runId = run.run_id;
   const name = run.run_name || run.run_id?.slice(0, 8) || '—';
-  const meta = [run.started_at || '', run.status || '', run.duration_ms != null ? run.duration_ms + ' ms' : ''].filter(Boolean).join(' · ');
+  const uiStatus = effectiveRunUiStatus(run);
+  const meta = [run.started_at || '', uiStatus || '', run.duration_ms != null ? run.duration_ms + ' ms' : ''].filter(Boolean).join(' · ');
   const nameHtml = run.status === 'running' ? '<span class="live-dot" aria-hidden="true"></span><span class="run-name">' + escapeHtml(name) + '</span>' : '<span class="run-name">' + escapeHtml(name) + '</span>';
   div.innerHTML = nameHtml + '<br><span class="run-meta">' + escapeHtml(meta) + '</span>';
   div.addEventListener('click', () => selectRun(run.run_id));
@@ -343,15 +357,16 @@ function renderRunSummary(run, events) {
   const tools = counts.tool_calls != null ? counts.tool_calls : 0;
   const errors = counts.errors != null ? counts.errors : 0;
   const loopWarnings = counts.loop_warnings != null ? counts.loop_warnings : 0;
-  const status = (run.status || '').toLowerCase();
+  const status = effectiveRunUiStatus(run);
   const runName = run.run_name || (run.run_id || currentRunId || '').slice(0, 8);
   const shortId = (run.run_id || currentRunId || '').slice(0, 8);
 
   // Status strip: badge, run name, started_at, duration, short id + copy
   runSummaryStatusEl.textContent = '';
   const badge = document.createElement('span');
-  badge.className = 'status-badge ' + (status === 'ok' ? 'ok' : status === 'error' ? 'error' : 'running');
-  badge.textContent = status === 'ok' ? 'OK' : status === 'error' ? 'ERROR' : 'RUNNING';
+  const badgeKind = status === 'ok' ? 'ok' : status === 'error' ? 'error' : status === 'warning' ? 'warning' : 'running';
+  badge.className = 'status-badge ' + badgeKind;
+  badge.textContent = status === 'ok' ? 'OK' : status === 'error' ? 'ERROR' : status === 'warning' ? 'WARNING' : 'RUNNING';
   runSummaryStatusEl.appendChild(badge);
   const nameSpan = document.createElement('span');
   nameSpan.className = 'run-name';
@@ -678,7 +693,8 @@ function mergeRunListIntoSidebar(runs) {
     const run = runs[i];
     const existing = runListEl.querySelector('.run-item[data-run-id="' + run.run_id + '"]');
     const name = run.run_name || run.run_id?.slice(0, 8) || '—';
-    const meta = [run.started_at || '', run.status || '', run.duration_ms != null ? run.duration_ms + ' ms' : ''].filter(Boolean).join(' · ');
+    const uiStatus = effectiveRunUiStatus(run);
+    const meta = [run.started_at || '', uiStatus || '', run.duration_ms != null ? run.duration_ms + ' ms' : ''].filter(Boolean).join(' · ');
     if (existing) {
       const nameEl = existing.querySelector('.run-name');
       const metaEl = existing.querySelector('.run-meta');
