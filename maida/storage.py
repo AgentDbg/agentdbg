@@ -1,8 +1,8 @@
 """
 Local storage for AgentDbg runs: run metadata (run.json) and append-only events (events.jsonl).
 
-~/.agentdbg/runs/<run_id>/ with required run.json and events.jsonl.
-Uses config.data_dir (default ~/.agentdbg). Stdlib only.
+~/.maida/runs/<run_id>/ with required run.json and events.jsonl.
+Uses config.data_dir (default ~/.maida). Stdlib only.
 """
 
 import json
@@ -14,9 +14,9 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from agentdbg.config import AgentDbgConfig
-from agentdbg.constants import SPEC_VERSION, default_counts
-from agentdbg.events import utc_now_iso_ms_z
+from maida.config import AgentDbgConfig
+from maida.constants import SPEC_VERSION, default_counts
+from maida.events import utc_now_iso_ms_z
 
 RUN_JSON = "run.json"
 EVENTS_JSONL = "events.jsonl"

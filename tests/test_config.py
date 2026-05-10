@@ -35,8 +35,10 @@ def _clean_env(monkeypatch):
 
 
 def _write_yaml(directory: Path, content: str) -> Path:
-    """Write a config.yaml inside *directory*/.agentdbg/ and return the file path."""
-    cfg_dir = directory / ".agentdbg"
+    """Write a config.yaml inside *directory*/.maida/ and return the file path."""
+    from maida.constants import LOCAL_DIR_NAME
+
+    cfg_dir = directory / LOCAL_DIR_NAME
     cfg_dir.mkdir(parents=True, exist_ok=True)
     cfg_file = cfg_dir / "config.yaml"
     cfg_file.write_text(content, encoding="utf-8")
@@ -59,7 +61,7 @@ def test_yaml_wins_when_env_missing(tmp_path, monkeypatch):
     fake_home.mkdir()
     monkeypatch.setattr(Path, "home", staticmethod(lambda: fake_home))
 
-    from agentdbg.config import load_config
+    from maida.config import load_config
 
     cfg = load_config(project_root=tmp_path)
 
@@ -82,7 +84,7 @@ def test_env_overrides_yaml_when_present(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", staticmethod(lambda: fake_home))
     monkeypatch.setenv("AGENTDBG_MAX_FIELD_BYTES", "456")
 
-    from agentdbg.config import load_config
+    from maida.config import load_config
 
     cfg = load_config(project_root=tmp_path)
 
@@ -100,7 +102,7 @@ def test_defaults_only_when_no_yaml_no_env(tmp_path, monkeypatch):
     fake_home.mkdir()
     monkeypatch.setattr(Path, "home", staticmethod(lambda: fake_home))
 
-    from agentdbg.config import load_config
+    from maida.config import load_config
 
     cfg = load_config(project_root=tmp_path)
 
@@ -122,8 +124,8 @@ def test_yaml_redact_off_disables_redaction(tmp_path, monkeypatch):
     fake_home.mkdir()
     monkeypatch.setattr(Path, "home", staticmethod(lambda: fake_home))
 
-    from agentdbg.config import load_config
-    from agentdbg._tracing._redact import _redact_and_truncate
+    from maida.config import load_config
+    from maida._tracing._redact import _redact_and_truncate
 
     cfg = load_config(project_root=tmp_path)
     assert cfg.redact is False

@@ -1,4 +1,4 @@
-# AgentDbg
+# Maida
 
 **AgentDbg** is a local-first debugger for AI agents. It captures structured traces (LLM calls, tool calls, state, errors) and gives you a timeline UI to inspect what happened-inputs, outputs, latency, and loop warnings.
 
@@ -36,7 +36,7 @@ python examples/minimal/simple_agent.py
 agentdbg view
 ```
 
-A browser tab opens showing every event in the run - tool calls, LLM calls, timing. Data is stored locally under `~/.agentdbg/runs/<run_id>/`.
+A browser tab opens showing every event in the run - tool calls, LLM calls, timing. Data is stored locally under `~/.maida/runs/<run_id>/`.
 
 ---
 

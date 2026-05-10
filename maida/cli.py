@@ -2,7 +2,7 @@
 Typer CLI for AgentDbg.
 
 Commands: list, export, view, baseline, assert, diff.
-Entrypoint: main() for console script agentdbg.cli:main.
+Entrypoint: main() for console script maida.cli:main.
 """
 
 import json
@@ -16,11 +16,13 @@ from typing import Annotated
 import typer
 from typer import Exit
 
-import agentdbg.storage as storage
-from agentdbg.config import load_config
-from agentdbg.constants import SPEC_VERSION
-from agentdbg.server import create_app
-from agentdbg import __version__
+import maida.storage as storage
+from maida.config import load_config
+from maida.constants import SPEC_VERSION
+from maida.server import create_app
+from maida import __version__
+
+from maida.constants import LOCAL_DIR_NAME
 
 EXIT_NOT_FOUND = 2
 EXIT_INTERNAL = 10
@@ -259,7 +261,7 @@ def baseline_cmd(
     ),
 ) -> None:
     """Capture a baseline snapshot from a completed run."""
-    from agentdbg.baseline import create_baseline, save_baseline
+    from maida.baseline import create_baseline, save_baseline
 
     try:
         config = load_config()
@@ -273,7 +275,7 @@ def baseline_cmd(
 
         if out is None:
             name_part = bl.get("source_run_name") or run_id
-            out = Path(".agentdbg") / "baselines" / f"{name_part}.json"
+            out = LOCAL_DIR_NAME / "baselines" / f"{name_part}.json"
 
         save_baseline(bl, out)
         typer.echo(f"Baseline saved to {out}")
@@ -332,14 +334,14 @@ def assert_cmd(
     ),
 ) -> None:
     """Assert that a run meets behavioral policy checks. Exit 0 = pass, 1 = fail."""
-    from agentdbg.assertions import (
+    from maida.assertions import (
         AssertionPolicy,
         format_report_json,
         format_report_markdown,
         format_report_text,
         run_assertions,
     )
-    from agentdbg.baseline import load_baseline
+    from maida.baseline import load_baseline
 
     try:
         config = load_config()
@@ -350,13 +352,13 @@ def assert_cmd(
             raise Exit(EXIT_NOT_FOUND)
 
         # Build policy: start from file, then overlay CLI flags
-        from agentdbg.policy import load_policy, merge_policy
+        from maida.policy import load_policy, merge_policy
 
         policy = AssertionPolicy()
         if policy_path is not None:
             policy = load_policy(policy_path)
         else:
-            default_policy = Path(".agentdbg") / "policy.yaml"
+            default_policy = LOCAL_DIR_NAME / "policy.yaml"
             if default_policy.is_file():
                 policy = load_policy(default_policy)
 
@@ -418,8 +420,8 @@ def diff_cmd(
     ),
 ) -> None:
     """Compare two runs or a run against a baseline."""
-    from agentdbg.baseline import load_baseline
-    from agentdbg.diff import compute_diff, format_diff_text
+    from maida.baseline import load_baseline
+    from maida.diff import compute_diff, format_diff_text
 
     try:
         config = load_config()
@@ -457,7 +459,7 @@ def diff_cmd(
 
 
 def main() -> None:
-    """CLI entrypoint (console script agentdbg.cli:main)."""
+    """CLI entrypoint (console script maida.cli:main)."""
     app()
 
 
