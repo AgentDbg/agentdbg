@@ -10,7 +10,7 @@ There are two types of exceptions:
   Have a descriptive name, and have no mention of "Maida" in the name.
 """
 
-import warnings
+from maida._utils import deprecated
 
 
 class MaidaException(Exception):
@@ -89,7 +89,7 @@ _DEPR_USE_INSTEAD = (
 
 
 def _make_depricated_class(name: str, bases: tuple[type, ...]) -> type:
-    @warnings.deprecated(
+    @deprecated(
         f"{_DEPR_USE_INSTEAD} Use '{name}' instead.",
         stacklevel=2,
     )
