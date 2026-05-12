@@ -1,12 +1,12 @@
 # Policy YAML reference
 
-A **policy file** (`.maida/policy.yaml`) lets teams check assertion thresholds into version control so that `agentdbg assert` applies consistent checks without long CLI flags.
+A **policy file** (`.maida/policy.yaml`) lets teams check assertion thresholds into version control so that `maida assert` applies consistent checks without long CLI flags.
 
 ---
 
 ## Resolution order
 
-`agentdbg assert` resolves the policy in this order:
+`maida assert` resolves the policy in this order:
 
 1. **`--policy PATH`** flag on the CLI (explicit path)
 2. **`.maida/policy.yaml`** in the current working directory (auto-detected)
@@ -26,7 +26,7 @@ assert:
   # ... assertion fields go here ...
 ```
 
-Requires **PyYAML** (`pip install pyyaml` or included in `agentdbg[yaml]`). If PyYAML is not installed, `agentdbg assert --policy ...` raises a clear `RuntimeError`.
+Requires **PyYAML** (`pip install pyyaml` or included in `maida[yaml]`). If PyYAML is not installed, `maida assert --policy ...` raises a clear `RuntimeError`.
 
 ---
 
@@ -89,7 +89,7 @@ The check **passes** when `actual <= limit`.
 
 ## Override rules
 
-When `agentdbg assert` loads a policy file and also receives CLI flags, `merge_policy` applies these rules:
+When `maida assert` loads a policy file and also receives CLI flags, `merge_policy` applies these rules:
 
 - A CLI value of `None` (flag not provided) keeps the file value.
 - A CLI boolean value of `False` (flag not provided) keeps the file value. Only an explicit `--no-loops` (which sends `True`) overrides.
@@ -100,7 +100,7 @@ This means you can set baseline thresholds in the committed policy file and tigh
 ```bash
 # File sets no_loops: true, step_tolerance: 0.3
 # CLI overrides max_steps for this specific run
-agentdbg assert abc123 --max-steps 100
+maida assert abc123 --max-steps 100
 ```
 
 ---
@@ -142,5 +142,5 @@ assert:
 ## Related docs
 
 - [Regression testing](../regression-testing.md) — end-to-end workflow
-- [CLI: `agentdbg assert`](../cli.md#agentdbg-assert) — command reference
+- [CLI: `maida assert`](../cli.md#maida-assert) — command reference
 - [Configuration](config.md) — env vars, YAML config, guardrails

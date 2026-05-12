@@ -26,14 +26,14 @@ Configuration is merged in this order (highest wins):
 **Example (env):**
 
 ```bash
-export MAIDA_DATA_DIR=/path/to/my/agentdbg/data
+export MAIDA_DATA_DIR=/path/to/my/maida/data
 ```
 
 **Example (YAML):**
 
 ```yaml
 # ~/.maida/config.yaml or .maida/config.yaml
-data_dir: /path/to/my/agentdbg/data
+data_dir: /path/to/my/maida/data
 ```
 
 ---

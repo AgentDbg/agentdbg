@@ -6,7 +6,7 @@ This guide captures the patterns and pitfalls discovered while building the Lang
 
 ## The core problem
 
-Every agent framework has its own error handling around callbacks/hooks/processors. When agentdbg detects a loop or a guardrail violation, it raises an exception. The framework almost always catches it:
+Every agent framework has its own error handling around callbacks/hooks/processors. When maida detects a loop or a guardrail violation, it raises an exception. The framework almost always catches it:
 
 | Framework | Hook mechanism | Error handling |
 |---|---|---|
@@ -20,7 +20,7 @@ Because `AgentDbgGuardrailExceeded` inherits from `Exception`, it gets caught an
 
 ## The `_AgentDbgAbortSignal` pattern
 
-The solution is `_AgentDbgAbortSignal`, an internal `BaseException` subclass defined in `agentdbg.exceptions`. `BaseException` subclasses bypass `except Exception` blocks — the same mechanism Python uses for `KeyboardInterrupt`, `SystemExit`, and `asyncio.CancelledError`.
+The solution is `_AgentDbgAbortSignal`, an internal `BaseException` subclass defined in `maida.exceptions`. `BaseException` subclasses bypass `except Exception` blocks — the same mechanism Python uses for `KeyboardInterrupt`, `SystemExit`, and `asyncio.CancelledError`.
 
 ### How it works
 
