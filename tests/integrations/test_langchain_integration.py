@@ -13,9 +13,9 @@ from maida import trace
 from maida.config import load_config
 from maida.events import EventType
 from maida.exceptions import (
-    AgentDbgGuardrailExceeded,
-    AgentDbgLoopAbort,
-    _AgentDbgAbortSignal,
+    GuardrailExceeded,
+    LoopAbort,
+    _MaidaAbortSignal,
 )
 from maida.storage import load_events
 
@@ -223,7 +223,7 @@ def test_langchain_handler_guardrail_propagates_via_raise_error(temp_data_dir):
             )
             iterations_completed += 1
 
-    with pytest.raises(AgentDbgLoopAbort):
+    with pytest.raises(LoopAbort):
         _run()
 
     assert iterations_completed < 20, (
@@ -231,7 +231,7 @@ def test_langchain_handler_guardrail_propagates_via_raise_error(temp_data_dir):
     )
     assert handler.raise_error is True, "raise_error should be True after guardrail"
     assert handler.abort_exception is not None
-    assert isinstance(handler.abort_exception, AgentDbgGuardrailExceeded)
+    assert isinstance(handler.abort_exception, GuardrailExceeded)
 
     config = load_config()
     run_id = get_latest_run_id(config)
@@ -257,7 +257,7 @@ def test_langchain_handler_resets_via_reset_method(temp_data_dir):
     """A reused handler resets raise_error and abort_exception via reset()."""
     handler = AgentDbgLangChainCallbackHandler()
     handler.raise_error = True
-    handler._abort_exception = AgentDbgLoopAbort(threshold=3, actual=3, message="old")
+    handler._abort_exception = LoopAbort(threshold=3, actual=3, message="old")
 
     handler.reset()
 
@@ -289,32 +289,32 @@ def test_langchain_handler_resets_via_reset_method(temp_data_dir):
 @pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
 def test_langchain_handler_blocks_after_abort(temp_data_dir):
     """Once a guardrail fires, subsequent on_llm_start / on_tool_start
-    raise _AgentDbgAbortSignal (BaseException) so it bypasses framework-level
+    raise _MaidaAbortSignal (BaseException) so it bypasses framework-level
     ``except Exception`` handlers and propagates out."""
     handler = AgentDbgLangChainCallbackHandler()
-    handler._abort_exception = AgentDbgLoopAbort(threshold=3, actual=3, message="loop")
+    handler._abort_exception = LoopAbort(threshold=3, actual=3, message="loop")
 
-    with pytest.raises(_AgentDbgAbortSignal) as exc_info:
+    with pytest.raises(_MaidaAbortSignal) as exc_info:
         handler.on_llm_start({"id": ["ChatFake"]}, ["hello"], run_id="llm-1")
-    assert isinstance(exc_info.value.cause, AgentDbgLoopAbort)
+    assert isinstance(exc_info.value.cause, LoopAbort)
     assert handler.raise_error is True
 
     handler.raise_error = False
-    with pytest.raises(_AgentDbgAbortSignal):
+    with pytest.raises(_MaidaAbortSignal):
         handler.on_chat_model_start({"id": ["ChatFake"]}, [[]], run_id="llm-2")
     assert handler.raise_error is True
 
     handler.raise_error = False
-    with pytest.raises(_AgentDbgAbortSignal):
+    with pytest.raises(_MaidaAbortSignal):
         handler.on_tool_start({"name": "t"}, "{}", run_id="tool-1")
     assert handler.raise_error is True
 
 
 @pytest.mark.skipif(LANGCHAIN_MISSING, reason="langchain_core not installed")
 def test_langchain_handler_on_llm_error_propagates_guardrail(temp_data_dir):
-    """AgentDbgGuardrailExceeded raised inside on_llm_error wraps in
-    _AgentDbgAbortSignal so it bypasses framework error handling and
-    propagates to _run_context which unwraps it to AgentDbgLoopAbort."""
+    """GuardrailExceeded raised inside on_llm_error wraps in
+    _MaidaAbortSignal so it bypasses framework error handling and
+    propagates to _run_context which unwraps it to LoopAbort."""
     handler = AgentDbgLangChainCallbackHandler()
 
     @trace(stop_on_loop=True, stop_on_loop_min_repetitions=3)
@@ -334,7 +334,7 @@ def test_langchain_handler_on_llm_error_propagates_guardrail(temp_data_dir):
                 run_id=f"llm-{i}",
             )
 
-    with pytest.raises(AgentDbgLoopAbort):
+    with pytest.raises(LoopAbort):
         _run()
 
     assert handler.raise_error is True

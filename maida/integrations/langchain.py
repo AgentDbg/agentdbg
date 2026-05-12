@@ -6,7 +6,7 @@ Uses only AgentDbg SDK: record_llm_call, record_tool_call. No CLI or server impo
 
 from typing import Any
 
-from maida.exceptions import AgentDbgGuardrailExceeded, _AgentDbgAbortSignal
+from maida.exceptions import GuardrailExceeded, _MaidaAbortSignal
 from maida.tracing import record_llm_call, record_tool_call
 from maida.integrations._error import MissingOptionalDependencyError
 
@@ -119,10 +119,10 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         self._pending_llm: dict[str, dict[str, Any]] = {}
         self._pending_tool: dict[str, dict[str, Any]] = {}
         self._key_counter = 0
-        self._abort_exception: AgentDbgGuardrailExceeded | None = None
+        self._abort_exception: GuardrailExceeded | None = None
 
     @property
-    def abort_exception(self) -> AgentDbgGuardrailExceeded | None:
+    def abort_exception(self) -> GuardrailExceeded | None:
         """The guardrail exception if one fired during the last run, or None."""
         return self._abort_exception
 
@@ -147,12 +147,12 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
 
     def _check_aborted(self) -> None:
         """If a guardrail abort was already triggered, raise
-        _AgentDbgAbortSignal (BaseException) so it bypasses framework-level
+        _MaidaAbortSignal (BaseException) so it bypasses framework-level
         ``except Exception`` handlers (e.g. LangGraph's graph executor) and
         propagates all the way out to the traced_run context manager."""
         if self._abort_exception is not None:
             self.raise_error = True
-            raise _AgentDbgAbortSignal(self._abort_exception)
+            raise _MaidaAbortSignal(self._abort_exception)
 
     def on_llm_start(
         self,
@@ -207,10 +207,10 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
                 usage=usage,
                 provider="langchain",
             )
-        except AgentDbgGuardrailExceeded as e:
+        except GuardrailExceeded as e:
             self._abort_exception = e
             self.raise_error = True
-            raise _AgentDbgAbortSignal(e) from e
+            raise _MaidaAbortSignal(e) from e
 
     def on_llm_error(
         self,
@@ -234,10 +234,10 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
                 error=error,
                 provider="langchain",
             )
-        except AgentDbgGuardrailExceeded as e:
+        except GuardrailExceeded as e:
             self._abort_exception = e
             self.raise_error = True
-            raise _AgentDbgAbortSignal(e) from e
+            raise _MaidaAbortSignal(e) from e
 
     def on_tool_start(
         self,
@@ -273,10 +273,10 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
         args = (pending or {}).get("args") if pending else None
         try:
             record_tool_call(name=name, args=args, result=output, status="ok")
-        except AgentDbgGuardrailExceeded as e:
+        except GuardrailExceeded as e:
             self._abort_exception = e
             self.raise_error = True
-            raise _AgentDbgAbortSignal(e) from e
+            raise _MaidaAbortSignal(e) from e
 
     def on_tool_error(
         self,
@@ -294,7 +294,7 @@ class AgentDbgLangChainCallbackHandler(BaseCallbackHandler):
             record_tool_call(
                 name=name, args=args, result=None, status="error", error=error
             )
-        except AgentDbgGuardrailExceeded as e:
+        except GuardrailExceeded as e:
             self._abort_exception = e
             self.raise_error = True
-            raise _AgentDbgAbortSignal(e) from e
+            raise _MaidaAbortSignal(e) from e

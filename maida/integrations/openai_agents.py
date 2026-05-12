@@ -21,7 +21,7 @@ generation, function, and handoff spans into AgentDbg `record_*` calls.
 from typing import Any
 
 from maida import has_active_run, record_llm_call, record_tool_call
-from maida.exceptions import AgentDbgGuardrailExceeded, _AgentDbgAbortSignal
+from maida.exceptions import GuardrailExceeded, _MaidaAbortSignal
 from maida.integrations._error import MissingOptionalDependencyError
 
 try:
@@ -94,11 +94,11 @@ def _base_meta(span: Any, span_type: str) -> dict[str, Any]:
 class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
     """Translate completed OpenAI Agents spans into AgentDbg recorders.
 
-    When a guardrail fires, the processor raises ``_AgentDbgAbortSignal``
+    When a guardrail fires, the processor raises ``_MaidaAbortSignal``
     (a ``BaseException``) so it bypasses the SDK's ``except Exception``
     handler and propagates to the ``traced_run`` / ``@trace`` context
     manager, which records ERROR + RUN_END and re-raises the wrapped
-    ``AgentDbgGuardrailExceeded``.
+    ``GuardrailExceeded``.
 
     As a defensive fallback the exception is also stored on
     ``abort_exception`` so callers can check ``raise_if_aborted()`` after
@@ -106,10 +106,10 @@ class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
     """
 
     def __init__(self) -> None:
-        self._abort_exception: AgentDbgGuardrailExceeded | None = None
+        self._abort_exception: GuardrailExceeded | None = None
 
     @property
-    def abort_exception(self) -> AgentDbgGuardrailExceeded | None:
+    def abort_exception(self) -> GuardrailExceeded | None:
         """The guardrail exception if one fired during the last run, or None."""
         return self._abort_exception
 
@@ -130,11 +130,11 @@ class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
 
     def on_span_start(self, span: Any) -> None:
         if self._abort_exception is not None:
-            raise _AgentDbgAbortSignal(self._abort_exception)
+            raise _MaidaAbortSignal(self._abort_exception)
 
     def on_span_end(self, span: Any) -> None:
         if self._abort_exception is not None:
-            raise _AgentDbgAbortSignal(self._abort_exception)
+            raise _MaidaAbortSignal(self._abort_exception)
 
         if not has_active_run():
             return
@@ -189,9 +189,9 @@ class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
                     status=status,
                     error=error,
                 )
-        except AgentDbgGuardrailExceeded as e:
+        except GuardrailExceeded as e:
             self._abort_exception = e
-            raise _AgentDbgAbortSignal(e) from e
+            raise _MaidaAbortSignal(e) from e
 
     def shutdown(self) -> None:
         return None

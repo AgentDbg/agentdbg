@@ -330,14 +330,14 @@ def test_no_run_created_when_only_sdk_span_is_emitted(openai_agents_module):
 
 def test_guardrail_exception_captured_on_abort_exception(openai_agents_module):
     """When a guardrail fires in on_span_end, the exception is stored and
-    _AgentDbgAbortSignal (BaseException) is raised to bypass framework error handling."""
+    _MaidaAbortSignal (BaseException) is raised to bypass framework error handling."""
     openai_agents, tracing_module, span_data = openai_agents_module
-    from maida.exceptions import AgentDbgLoopAbort, _AgentDbgAbortSignal
+    from maida.exceptions import LoopAbort, _MaidaAbortSignal
 
     processor = openai_agents.PROCESSOR
     assert processor.abort_exception is None
 
-    exc = AgentDbgLoopAbort(threshold=3, actual=3, message="stop_on_loop test")
+    exc = LoopAbort(threshold=3, actual=3, message="stop_on_loop test")
 
     span = _fake_span(
         span_data.GenerationSpanData(input="hello", output="world", model="gpt-4o-mini")
@@ -350,22 +350,22 @@ def test_guardrail_exception_captured_on_abort_exception(openai_agents_module):
         with patch.object(
             openai_agents, "record_llm_call", side_effect=fake_record_llm_call
         ):
-            with pytest.raises(_AgentDbgAbortSignal) as sig_info:
+            with pytest.raises(_MaidaAbortSignal) as sig_info:
                 tracing_module.emit_span(span)
 
-    assert isinstance(sig_info.value.cause, AgentDbgLoopAbort)
+    assert isinstance(sig_info.value.cause, LoopAbort)
     assert processor.abort_exception is exc
-    with pytest.raises(AgentDbgLoopAbort):
+    with pytest.raises(LoopAbort):
         processor.raise_if_aborted()
 
 
 def test_abort_exception_resets_on_new_trace(openai_agents_module):
     """on_trace_start resets abort_exception so a reused processor is clean."""
     openai_agents, _, _ = openai_agents_module
-    from maida.exceptions import AgentDbgLoopAbort
+    from maida.exceptions import LoopAbort
 
     processor = openai_agents.PROCESSOR
-    processor._abort_exception = AgentDbgLoopAbort(threshold=3, actual=3, message="old")
+    processor._abort_exception = LoopAbort(threshold=3, actual=3, message="old")
 
     processor.on_trace_start(SimpleNamespace(trace_id="new_trace"))
     assert processor.abort_exception is None
@@ -380,14 +380,14 @@ def test_loop_warning_dedup_with_openai_agents_adapter(
     openai_agents_module, temp_data_dir
 ):
     """When stop_on_loop fires inside the OpenAI Agents adapter, the
-    _AgentDbgAbortSignal (BaseException) bypasses the SDK's except Exception
+    _MaidaAbortSignal (BaseException) bypasses the SDK's except Exception
     and propagates to _run_context, which records ERROR + RUN_END and
-    re-raises AgentDbgLoopAbort.  The loop stops immediately."""
+    re-raises LoopAbort.  The loop stops immediately."""
     openai_agents, tracing_module, span_data = openai_agents_module
     from maida import trace
     from maida.config import load_config
     from maida.events import EventType
-    from maida.exceptions import AgentDbgLoopAbort
+    from maida.exceptions import LoopAbort
     from maida.storage import load_events, load_run_meta
     from tests.conftest import get_latest_run_id
 
@@ -429,7 +429,7 @@ def test_loop_warning_dedup_with_openai_agents_adapter(
             )
             iterations_completed += 1
 
-    with pytest.raises(AgentDbgLoopAbort):
+    with pytest.raises(LoopAbort):
         run_openai_agents_looping()
 
     assert iterations_completed < 10, (

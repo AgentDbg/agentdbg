@@ -15,7 +15,7 @@ Then:
 import os
 
 from maida import (
-    AgentDbgLoopAbort,
+    LoopAbort,
     record_llm_call,
     record_state,
     record_tool_call,
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     try:
         run_demo()
         print("[demo] run completed without triggering guardrail (unexpected)")
-    except AgentDbgLoopAbort as e:
+    except LoopAbort as e:
         print(f"[demo] AgentDbg stopped the agent: {e}")
         print("[demo] The full trace is saved with the LOOP_WARNING and ERROR events.")
         print("[demo] Open the timeline with: maida view")
