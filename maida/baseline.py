@@ -8,7 +8,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.events import EventType, utc_now_iso_ms_z
 from maida.storage import load_events, load_run_meta
 
@@ -74,7 +74,7 @@ def extract_run_metrics(meta: dict, events: list[dict]) -> dict:
     }
 
 
-def create_baseline(run_id: str, config: AgentDbgConfig) -> dict:
+def create_baseline(run_id: str, config: MaidaConfig) -> dict:
     """Load a completed run and return a baseline snapshot dict."""
     meta = load_run_meta(run_id, config)
     events = load_events(run_id, config)

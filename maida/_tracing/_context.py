@@ -10,7 +10,7 @@ from contextvars import ContextVar
 from datetime import datetime
 from typing import Any, Callable
 
-from maida.config import AgentDbgConfig, load_config
+from maida.config import MaidaConfig, load_config
 from maida.constants import default_counts
 from maida.events import EventType, new_event, utc_now_iso_ms_z
 from maida.guardrails import GuardrailParams, check_after_event
@@ -21,7 +21,7 @@ from maida._tracing._redact import _redact_and_truncate, _redact_argv
 
 _run_id_var: ContextVar[str | None] = ContextVar("agentdbg_run_id", default=None)
 _counts_var: ContextVar[dict | None] = ContextVar("agentdbg_counts", default=None)
-_config_var: ContextVar[AgentDbgConfig | None] = ContextVar(
+_config_var: ContextVar[MaidaConfig | None] = ContextVar(
     "agentdbg_config", default=None
 )
 _event_window_var: ContextVar[list[dict] | None] = ContextVar(
@@ -41,7 +41,7 @@ _event_count_var: ContextVar[int] = ContextVar("agentdbg_event_count", default=0
 # Implicit run: stored so atexit can finalize (RUN_END + run.json status).
 _implicit_run_id: str | None = None
 _implicit_counts: dict | None = None
-_implicit_config: AgentDbgConfig | None = None
+_implicit_config: MaidaConfig | None = None
 _implicit_started_at: str | None = None
 _implicit_event_window: list[dict] = []
 _implicit_loop_emitted: set[str] = set()
@@ -106,7 +106,7 @@ def _run_start_payload(run_name: str | None) -> dict[str, Any]:
 
 
 def _run_start_payload_for_event(
-    run_name: str | None, config: AgentDbgConfig
+    run_name: str | None, config: MaidaConfig
 ) -> dict[str, Any]:
     """Build RUN_START payload with argv values redacted per redact_keys, then apply full redaction/truncation."""
     payload = _run_start_payload(run_name)
@@ -115,7 +115,7 @@ def _run_start_payload_for_event(
 
 
 def _append_event_and_check_guardrails(
-    run_id: str, event: dict, config: AgentDbgConfig, counts: dict
+    run_id: str, event: dict, config: MaidaConfig, counts: dict
 ) -> None:
     """
     Append event to storage, then if in an explicit run with guardrails, increment
@@ -186,7 +186,7 @@ def _finalize_implicit_run() -> None:
 atexit.register(_finalize_implicit_run)
 
 
-def _ensure_run() -> tuple[str, dict, AgentDbgConfig, list[dict], set[str]] | None:
+def _ensure_run() -> tuple[str, dict, MaidaConfig, list[dict], set[str]] | None:
     """
     Return (run_id, counts, config, event_window, loop_emitted) for the current run, or None if no run.
     If MAIDA_IMPLICIT_RUN=1 and no run is active, create an implicit run (once per process)

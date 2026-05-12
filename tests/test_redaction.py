@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 
 from maida.constants import REDACTED_MARKER, TRUNCATED_MARKER
-from maida.config import load_config, AgentDbgConfig
+from maida.config import load_config, MaidaConfig
 from maida.guardrails import GuardrailParams
 from maida.events import EventType
 from maida._tracing._redact import _redact_and_truncate
@@ -28,7 +28,7 @@ def test_redaction_constants_unchanged():
 def test_max_field_truncation():
     """Strings over MAIDA_MAX_FIELD_BYTES are truncated and suffixed with __TRUNCATED__."""
     max_bytes = 100
-    cfg = AgentDbgConfig(
+    cfg = MaidaConfig(
         redact=True,
         redact_keys=["token"],
         max_field_bytes=max_bytes,
@@ -181,9 +181,9 @@ def test_run_start_argv_redacted(temp_data_dir):
     assert argv == ["test_script.py", f"--api-key={REDACTED_MARKER}", "--verbose"]
 
 
-def _redact_cfg(keys: list[str]) -> AgentDbgConfig:
+def _redact_cfg(keys: list[str]) -> MaidaConfig:
     """Minimal config with redaction enabled and given redact_keys."""
-    return AgentDbgConfig(
+    return MaidaConfig(
         redact=True,
         redact_keys=keys,
         max_field_bytes=1000,

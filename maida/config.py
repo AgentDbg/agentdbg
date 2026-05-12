@@ -33,7 +33,7 @@ _MIN_LOOP_REPETITIONS = 2
 
 
 @dataclass
-class AgentDbgConfig:
+class MaidaConfig:
     """Runtime configuration for tracing, redaction, loop detection, and guardrails."""
 
     redact: bool
@@ -222,9 +222,9 @@ def _apply_env_to_guardrails(params: GuardrailParams) -> GuardrailParams:
     return params
 
 
-def load_config(project_root: Path | None = None) -> AgentDbgConfig:
+def load_config(project_root: Path | None = None) -> MaidaConfig:
     """
-    Load AgentDbgConfig with precedence (highest first):
+    Load MaidaConfig with precedence (highest first):
     1. Environment variables
     2. .maida/config.yaml in project root (if present)
     3. ~/.maida/config.yaml
@@ -307,7 +307,7 @@ def load_config(project_root: Path | None = None) -> AgentDbgConfig:
 
     guardrails = _apply_env_to_guardrails(guardrails)
 
-    return AgentDbgConfig(
+    return MaidaConfig(
         redact=redact,
         redact_keys=redact_keys,
         max_field_bytes=max_field_bytes,

@@ -5,7 +5,7 @@ Depends: maida.events, maida.storage, maida.loopdetect, _redact, _context.
 
 from typing import Any
 
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.events import EventType, new_event
 from maida.exceptions import LoopAbort
 from maida.loopdetect import detect_loop, pattern_key as loop_pattern_key
@@ -25,7 +25,7 @@ from maida._tracing._redact import (
 def _maybe_emit_loop_warning(
     run_id: str,
     counts: dict[str, int],
-    config: AgentDbgConfig,
+    config: MaidaConfig,
     window: list[dict],
     emitted: set[str],
 ) -> None:
