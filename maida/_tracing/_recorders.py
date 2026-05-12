@@ -7,7 +7,7 @@ from typing import Any
 
 from maida.config import AgentDbgConfig
 from maida.events import EventType, new_event
-from maida.exceptions import AgentDbgLoopAbort
+from maida.exceptions import LoopAbort
 from maida.loopdetect import detect_loop, pattern_key as loop_pattern_key
 
 from maida._tracing._context import (
@@ -39,14 +39,14 @@ def _maybe_emit_loop_warning(
     key = loop_pattern_key(payload)
     if key in emitted:
         # Pattern already emitted — no duplicate event.  But if stop_on_loop
-        # is active the previous AgentDbgLoopAbort may have been swallowed by
+        # is active the previous LoopAbort may have been swallowed by
         # the calling framework (e.g. LangChain, OpenAI Agents SDK).  Re-raise
         # so the loop keeps being interrupted on every detection opportunity.
         params = _guardrail_params_var.get()
         if params is not None and params.stop_on_loop:
             repetitions = payload.get("repetitions", 0)
             if repetitions >= params.stop_on_loop_min_repetitions:
-                raise AgentDbgLoopAbort(
+                raise LoopAbort(
                     threshold=params.stop_on_loop_min_repetitions,
                     actual=repetitions,
                     message=(
@@ -64,7 +64,7 @@ def _maybe_emit_loop_warning(
     )
     ev = new_event(EventType.LOOP_WARNING, run_id, name, payload)
     # Record the dedup key and increment the count BEFORE the guardrail
-    # check.  _append_event_and_check_guardrails may raise AgentDbgLoopAbort
+    # check.  _append_event_and_check_guardrails may raise LoopAbort
     # when stop_on_loop is enabled; if the calling framework swallows that
     # exception (e.g. OpenAI Agents SDK), subsequent spans would re-trigger
     # the same detection and emit duplicate LOOP_WARNINGs.
