@@ -10,7 +10,7 @@ from contextvars import ContextVar
 from datetime import datetime
 from typing import Any, Callable
 
-from maida.config import AgentDbgConfig, load_config
+from maida.config import MaidaConfig, load_config
 from maida.constants import default_counts
 from maida.events import EventType, new_event, utc_now_iso_ms_z
 from maida.guardrails import GuardrailParams, check_after_event
@@ -19,29 +19,25 @@ from maida.storage import append_event, create_run, finalize_run
 from maida._tracing._redact import _redact_and_truncate, _redact_argv
 
 
-_run_id_var: ContextVar[str | None] = ContextVar("agentdbg_run_id", default=None)
-_counts_var: ContextVar[dict | None] = ContextVar("agentdbg_counts", default=None)
-_config_var: ContextVar[AgentDbgConfig | None] = ContextVar(
-    "agentdbg_config", default=None
-)
+_run_id_var: ContextVar[str | None] = ContextVar("maida_run_id", default=None)
+_counts_var: ContextVar[dict | None] = ContextVar("maida_counts", default=None)
+_config_var: ContextVar[MaidaConfig | None] = ContextVar("maida_config", default=None)
 _event_window_var: ContextVar[list[dict] | None] = ContextVar(
-    "agentdbg_event_window", default=None
+    "maida_event_window", default=None
 )
 _loop_emitted_var: ContextVar[set[str] | None] = ContextVar(
-    "agentdbg_loop_emitted", default=None
+    "maida_loop_emitted", default=None
 )
 _guardrail_params_var: ContextVar[GuardrailParams | None] = ContextVar(
-    "agentdbg_guardrail_params", default=None
+    "maida_guardrail_params", default=None
 )
-_started_at_var: ContextVar[str | None] = ContextVar(
-    "agentdbg_started_at", default=None
-)
-_event_count_var: ContextVar[int] = ContextVar("agentdbg_event_count", default=0)
+_started_at_var: ContextVar[str | None] = ContextVar("maida_started_at", default=None)
+_event_count_var: ContextVar[int] = ContextVar("maida_event_count", default=0)
 
 # Implicit run: stored so atexit can finalize (RUN_END + run.json status).
 _implicit_run_id: str | None = None
 _implicit_counts: dict | None = None
-_implicit_config: AgentDbgConfig | None = None
+_implicit_config: MaidaConfig | None = None
 _implicit_started_at: str | None = None
 _implicit_event_window: list[dict] = []
 _implicit_loop_emitted: set[str] = set()
@@ -82,9 +78,9 @@ def _resolve_run_name(
     func: Callable[..., Any] | None,
 ) -> str:
     """
-    Resolve run name by precedence: AGENTDBG_RUN_NAME env, explicit name, default (entrypoint + timestamp).
+    Resolve run name by precedence: MAIDA_RUN_NAME env, explicit name, default (entrypoint + timestamp).
     """
-    env_name = os.environ.get("AGENTDBG_RUN_NAME", "").strip()
+    env_name = os.environ.get("MAIDA_RUN_NAME", "").strip()
     if env_name:
         return env_name
     if explicit_name:
@@ -106,7 +102,7 @@ def _run_start_payload(run_name: str | None) -> dict[str, Any]:
 
 
 def _run_start_payload_for_event(
-    run_name: str | None, config: AgentDbgConfig
+    run_name: str | None, config: MaidaConfig
 ) -> dict[str, Any]:
     """Build RUN_START payload with argv values redacted per redact_keys, then apply full redaction/truncation."""
     payload = _run_start_payload(run_name)
@@ -115,7 +111,7 @@ def _run_start_payload_for_event(
 
 
 def _append_event_and_check_guardrails(
-    run_id: str, event: dict, config: AgentDbgConfig, counts: dict
+    run_id: str, event: dict, config: MaidaConfig, counts: dict
 ) -> None:
     """
     Append event to storage, then if in an explicit run with guardrails, increment
@@ -186,10 +182,10 @@ def _finalize_implicit_run() -> None:
 atexit.register(_finalize_implicit_run)
 
 
-def _ensure_run() -> tuple[str, dict, AgentDbgConfig, list[dict], set[str]] | None:
+def _ensure_run() -> tuple[str, dict, MaidaConfig, list[dict], set[str]] | None:
     """
     Return (run_id, counts, config, event_window, loop_emitted) for the current run, or None if no run.
-    If AGENTDBG_IMPLICIT_RUN=1 and no run is active, create an implicit run (once per process)
+    If MAIDA_IMPLICIT_RUN=1 and no run is active, create an implicit run (once per process)
     and return it. Implicit run never sets contextvars, so it does not hijack subsequent
     traced runs or leave a "current run" for the rest of the process.
     """
@@ -209,7 +205,7 @@ def _ensure_run() -> tuple[str, dict, AgentDbgConfig, list[dict], set[str]] | No
                 emitted = set()
                 _loop_emitted_var.set(emitted)
             return (run_id, counts, config, window, emitted)
-    if os.environ.get("AGENTDBG_IMPLICIT_RUN", "").strip() == "1":
+    if os.environ.get("MAIDA_IMPLICIT_RUN", "").strip() == "1":
         if (
             _implicit_run_id is not None
             and _implicit_counts is not None

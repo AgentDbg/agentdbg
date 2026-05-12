@@ -1,6 +1,6 @@
 # Viewer (timeline UI)
 
-The AgentDbg viewer is a local web UI for inspecting runs and their event timelines. It is served by `agentdbg view` and uses only static HTML, CSS, and JavaScript—no build step.
+The Maida viewer is a local web UI for inspecting runs and their event timelines. It is served by `maida view` and uses only static HTML, CSS, and JavaScript—no build step.
 
 ---
 
@@ -9,7 +9,7 @@ The AgentDbg viewer is a local web UI for inspecting runs and their event timeli
 ### Starting the viewer
 
 ```bash
-agentdbg view
+maida view
 ```
 
 This starts a server at **http://127.0.0.1:8712** (configurable with `--host` and `--port`) and opens the browser. The server runs until you press **Ctrl+C**. See the [CLI](cli.md) for options (`--no-browser`, `--json`, etc.).
@@ -58,7 +58,7 @@ These operations use `POST /api/runs/{run_id}/rename` and `DELETE /api/runs/{run
 
 ### Where the code lives
 
-All viewer assets are under **`agentdbg/ui_static/`**:
+All viewer assets are under **`maida/ui_static/`**:
 
 | File         | Role |
 |--------------|------|
@@ -78,8 +78,8 @@ The server (see [Architecture](architecture.md)) serves these at `/`, `/styles.c
 
 ### Making changes
 
-1. Start the viewer: `agentdbg view` (optionally with `--no-browser` and open the URL manually).
-2. Edit files under `agentdbg/ui_static/`.
+1. Start the viewer: `maida view` (optionally with `--no-browser` and open the URL manually).
+2. Edit files under `maida/ui_static/`.
 3. Reload the page to see changes (no build step).
 
 For API contracts and storage layout, see [Architecture](architecture.md) and [Trace format](reference/trace-format.md).

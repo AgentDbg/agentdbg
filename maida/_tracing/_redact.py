@@ -1,13 +1,13 @@
 """
 Pure redaction and truncation utilities.
-Only depends on maida.constants and maida.config (for AgentDbgConfig type).
+Only depends on maida.constants and maida.config (for MaidaConfig type).
 """
 
 import re
 import traceback
 from typing import Any
 
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.constants import DEPTH_LIMIT, REDACTED_MARKER, TRUNCATED_MARKER
 
 # TODO: Remove the _RECURSION_LIMIT and use DEPTH_LIMIT instead
@@ -24,7 +24,7 @@ def _key_matches_redact(key: str, redact_keys: list[str]) -> bool:
 _ARGV_OPTION_VALUE = re.compile(r"^(-{1,2})([a-zA-Z0-9_-]+)=(.*)$")
 
 
-def _redact_argv(argv: list[str], config: AgentDbgConfig) -> list[str]:
+def _redact_argv(argv: list[str], config: MaidaConfig) -> list[str]:
     """
     Redact only sensitive option values in argv. E.g. --api-key=sk-secret -> --api-key=__REDACTED__.
     Option name is matched against config.redact_keys (with hyphens normalized to underscores).
@@ -61,7 +61,7 @@ def _truncate_string(s: str, max_bytes: int) -> str:
 
 def _redact_and_truncate(
     obj: Any,
-    config: AgentDbgConfig,
+    config: MaidaConfig,
     depth: int = 0,
 ) -> Any:
     """
@@ -121,7 +121,7 @@ def _normalize_usage(usage: Any) -> dict[str, int | None] | None:
 
 
 def _apply_redaction_truncation(
-    payload: Any, meta: Any, config: AgentDbgConfig
+    payload: Any, meta: Any, config: MaidaConfig
 ) -> tuple[Any, Any]:
     """Apply redaction and truncation to payload and meta; returns (payload, meta)."""
     return (
@@ -132,7 +132,7 @@ def _apply_redaction_truncation(
 
 def _build_error_payload(
     exc_or_message: BaseException | str | dict[str, Any] | None,
-    config: AgentDbgConfig,
+    config: MaidaConfig,
     include_stack: bool = True,
 ) -> dict[str, Any] | None:
     """

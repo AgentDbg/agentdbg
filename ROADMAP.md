@@ -1,6 +1,6 @@
 # Roadmap
 
-AgentDbg is a **local-first debugger for AI agents**. This roadmap reflects what's shipped, what's next, and what's on the horizon.
+Maida is a reliability gate for AI agents. This roadmap reflects what's shipped, what's next, and what's on the horizon.
 
 Guiding principle: every feature must make the debugging workflow faster and clearer. If it looks more like observability than debugging, it doesn't belong here.
 

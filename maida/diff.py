@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from maida.baseline import extract_run_metrics
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.storage import load_events, load_run_meta
 
 
@@ -42,7 +42,7 @@ def compute_diff(
     run_a_id: str,
     run_b_id: str | None = None,
     baseline: dict | None = None,
-    config: AgentDbgConfig | None = None,
+    config: MaidaConfig | None = None,
 ) -> RunDiff:
     """Compute a structural diff between two runs or a run and a baseline.
 

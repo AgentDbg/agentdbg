@@ -12,7 +12,7 @@ Maida is **framework-agnostic** at the core. The SDK is a thin layer: you call `
 
 ### LangChain / LangGraph callback handler
 
-**Status: available.** An optional callback handler lives at `agentdbg.integrations.langchain`. It records LLM calls and tool calls to the active Maida run automatically.
+**Status: available.** An optional callback handler lives at `maida.integrations.langchain`. It records LLM calls and tool calls to the active Maida run automatically.
 
 **Requirements:** `langchain-core` must be installed. Install the optional dependency group:
 
@@ -25,8 +25,8 @@ If `langchain-core` is not installed, importing the integration raises a clear `
 **Usage:**
 
 ```python
-from agentdbg import trace
-from agentdbg.integrations import LangChainCallbackHandler
+from maida import trace
+from maida.integrations import LangChainCallbackHandler
 
 @trace
 def run_agent():
@@ -47,7 +47,7 @@ See `examples/langchain/minimal.py` for a runnable example:
 
 ```bash
 uv run --extra langchain python examples/langchain/minimal.py
-agentdbg view
+maida view
 ```
 
 **Guardrails (e.g. `stop_on_loop`) with LangChain / LangGraph:**
@@ -55,7 +55,7 @@ All guardrails work with the callback handler. When a guardrail fires, the handl
 
 **Notes:**
 
-- The handler requires an active Maida run - wrap your entrypoint with `@trace` or set `AGENTDBG_IMPLICIT_RUN=1`.
+- The handler requires an active Maida run - wrap your entrypoint with `@trace` or set `MAIDA_IMPLICIT_RUN=1`.
 - Tool errors are recorded as `TOOL_CALL` events with `status="error"` and include the error message.
 - LLM errors are recorded as `LLM_CALL` events with `status="error"` (not as separate `ERROR` events).
 
@@ -76,8 +76,8 @@ If `openai-agents` is not installed, importing the integration raises a clear `I
 **Usage:**
 
 ```python
-from agentdbg import trace
-from agentdbg.integrations import openai_agents  # registers hooks
+from maida import trace
+from maida.integrations import openai_agents  # registers hooks
 
 
 @trace
@@ -96,14 +96,14 @@ See `examples/openai_agents/minimal.py` for a runnable fake-data example:
 
 ```bash
 uv run --extra openai python examples/openai_agents/minimal.py
-agentdbg view
+maida view
 ```
 
 **Guardrails with OpenAI Agents SDK:**
 All guardrails work with the tracing processor. When a guardrail fires, the processor raises `_MaidaAbortSignal` (a `BaseException`) which bypasses the SDK's `except Exception` error handling — stopping the run immediately:
 
 ```python
-from agentdbg import trace, LoopAbort
+from maida import trace, LoopAbort
 
 @trace(stop_on_loop=True)
 def run_agent():
@@ -136,10 +136,10 @@ If `crewai` is not installed, importing the integration raises a clear `ImportEr
 **Usage:**
 
 ```python
-import agentdbg
-from agentdbg.integrations import crewai as adbg_crewai  # registers hooks
+import maida
+from maida.integrations import crewai as adbg_crewai  # registers hooks
 
-@agentdbg.trace
+@maida.trace
 def run_crew():
     # ... your CrewAI crew.kickoff() or flow.kickoff() ...
     pass

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from maida.baseline import extract_run_metrics
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.storage import load_events, load_run_meta
 
 
@@ -132,7 +132,7 @@ def run_assertions(
     run_id: str,
     policy: AssertionPolicy,
     baseline: dict | None = None,
-    config: AgentDbgConfig | None = None,
+    config: MaidaConfig | None = None,
 ) -> AssertionReport:
     """Run all enabled assertion checks against a completed run.
 
@@ -140,7 +140,7 @@ def run_assertions(
         run_id: The run to check.
         policy: The assertion policy with thresholds.
         baseline: Optional baseline dict to compare against.
-        config: AgentDbgConfig (loaded via ``load_config`` if ``None``).
+        config: MaidaConfig (loaded via ``load_config`` if ``None``).
 
     Returns:
         ``AssertionReport`` with all check results.
@@ -332,7 +332,7 @@ def format_report_json(report: AssertionReport) -> str:
 def format_report_markdown(report: AssertionReport) -> str:
     """Format report as Markdown for GitHub PR comments."""
     lines: list[str] = [
-        "## AgentDbg Regression Report",
+        "## Maida Assertion Report",
         "",
         "| Check | Status | Details |",
         "|-------|--------|---------|",

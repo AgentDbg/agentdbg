@@ -1,6 +1,6 @@
 # Maida
 
-**AgentDbg** is a local-first debugger for AI agents. It captures structured traces (LLM calls, tool calls, state, errors) and gives you a timeline UI to inspect what happened-inputs, outputs, latency, and loop warnings.
+**Maida** is a pre-merge behavioral regression gate for AI agents. It captures structured traces (LLM calls, tool calls, state, errors), and gates the changes that don't conform a pre-existing policy.
 
 **What it is:** A developer tool to instrument your agent, run it, and see a full event timeline locally. No cloud, no accounts.
 
@@ -13,14 +13,14 @@
 **1. Install:**
 
 ```bash
-pip install agentdbg
+pip install maida
 ```
 
 Or from source:
 
 ```bash
-git clone https://github.com/AgentDbg/AgentDbg.git
-cd AgentDbg/agentdbg
+git clone https://github.com/maida-ai/maida.git
+cd maida
 uv sync
 ```
 
@@ -33,7 +33,7 @@ python examples/minimal/simple_agent.py
 **3. Open the timeline viewer:**
 
 ```bash
-agentdbg view
+maida view
 ```
 
 A browser tab opens showing every event in the run - tool calls, LLM calls, timing. Data is stored locally under `~/.maida/runs/<run_id>/`.
@@ -50,7 +50,7 @@ A browser tab opens showing every event in the run - tool calls, LLM calls, timi
 | **LangChain customer support** (advanced) | `examples/langchain/` | Set API keys, then follow `_customer_support/README.md` |
 | **Demos** (short scripts) | `examples/demo/` | `python examples/demo/pure_python.py` or `python examples/demo/langchain.py` |
 
-After any run, open the timeline with `agentdbg view`.
+After any run, open the timeline with `maida view`.
 
 ---
 

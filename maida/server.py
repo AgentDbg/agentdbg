@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 import maida.storage as storage
-from maida.config import AgentDbgConfig, load_config
+from maida.config import MaidaConfig, load_config
 from maida.constants import SPEC_VERSION
 
 UI_STATIC_DIR = Path(__file__).resolve().parent / "ui_static"
@@ -23,29 +23,27 @@ UI_APP_JS_PATH = UI_STATIC_DIR / "app.js"
 FAVICON_PATH = UI_STATIC_DIR / "favicon.svg"
 
 
-def _get_config(request: Request) -> AgentDbgConfig:
+def _get_config(request: Request) -> MaidaConfig:
     """Return config cached on app state (set at app creation)."""
     return request.app.state.config
 
 
 def create_app() -> FastAPI:
     """Create and return the FastAPI application for the local viewer."""
-    app = FastAPI(title="AgentDbg Viewer")
+    app = FastAPI(title="Maida Viewer")
     app.state.config = load_config()
 
     class RenameRunRequest(BaseModel):
         run_name: str
 
     @app.get("/api/runs")
-    def get_runs(config: AgentDbgConfig = Depends(_get_config)) -> dict:
+    def get_runs(config: MaidaConfig = Depends(_get_config)) -> dict:
         """List recent runs. Response: { spec_version, runs }."""
         runs = storage.list_runs(limit=50, config=config)
         return {"spec_version": SPEC_VERSION, "runs": runs}
 
     @app.get("/api/runs/{run_id}")
-    def get_run_meta(
-        run_id: str, config: AgentDbgConfig = Depends(_get_config)
-    ) -> dict:
+    def get_run_meta(run_id: str, config: MaidaConfig = Depends(_get_config)) -> dict:
         """Return run.json metadata for the given run_id."""
         try:
             return storage.load_run_meta(run_id, config)
@@ -55,9 +53,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="run not found")
 
     @app.get("/api/runs/{run_id}/events")
-    def get_run_events(
-        run_id: str, config: AgentDbgConfig = Depends(_get_config)
-    ) -> dict:
+    def get_run_events(run_id: str, config: MaidaConfig = Depends(_get_config)) -> dict:
         """Return events array for the run. 404 if run not found."""
         try:
             storage.load_run_meta(run_id, config)
@@ -76,9 +72,7 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/api/runs/{run_id}/paths")
-    def get_run_paths(
-        run_id: str, config: AgentDbgConfig = Depends(_get_config)
-    ) -> dict:
+    def get_run_paths(run_id: str, config: MaidaConfig = Depends(_get_config)) -> dict:
         """Return local filesystem paths for the run (run_dir, run_json, events_jsonl)."""
         try:
             paths = storage.get_run_paths(run_id, config)
@@ -90,7 +84,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/runs/{run_id}/rename")
     def validate_run_for_rename(
-        run_id: str, config: AgentDbgConfig = Depends(_get_config)
+        run_id: str, config: MaidaConfig = Depends(_get_config)
     ) -> dict:
         """
         Validate run_id and return metadata.
@@ -109,7 +103,7 @@ def create_app() -> FastAPI:
     def rename_run(
         run_id: str,
         payload: RenameRunRequest,
-        config: AgentDbgConfig = Depends(_get_config),
+        config: MaidaConfig = Depends(_get_config),
     ) -> dict:
         """Rename a run by updating its run.json run_name field."""
         try:
@@ -122,9 +116,7 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="run not found")
 
     @app.delete("/api/runs/{run_id}")
-    def delete_run(
-        run_id: str, config: AgentDbgConfig = Depends(_get_config)
-    ) -> Response:
+    def delete_run(run_id: str, config: MaidaConfig = Depends(_get_config)) -> Response:
         """Delete a run directory and its contents."""
         try:
             storage.delete_run(run_id, config)

@@ -15,7 +15,7 @@ def run():
 ```
 
 The adapter listens to OpenAI Agents tracing spans and translates completed
-generation, function, and handoff spans into AgentDbg `record_*` calls.
+generation, function, and handoff spans into Maida `record_*` calls.
 """
 
 from typing import Any
@@ -39,11 +39,11 @@ except ImportError as e:
         "Install with `pip install maida[openai]`."
     ) from e
 
-_PROCESSOR_ATTR = "_agentdbg_openai_agents_processor"
+_PROCESSOR_ATTR = "_maida_openai_agents_processor"
 
 
-def _span_error_to_agentdbg_error(span_error: Any) -> dict[str, Any] | str | None:
-    """Normalize the SDK span error shape to AgentDbg's error payload contract."""
+def _span_error_to_maida_error(span_error: Any) -> dict[str, Any] | str | None:
+    """Normalize the SDK span error shape to Maida's error payload contract."""
     if span_error is None:
         return None
     if isinstance(span_error, dict):
@@ -91,8 +91,8 @@ def _base_meta(span: Any, span_type: str) -> dict[str, Any]:
     return {"framework": "openai_agents", "openai_agents": openai_meta}
 
 
-class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
-    """Translate completed OpenAI Agents spans into AgentDbg recorders.
+class OpenAIAgentsTracingProcessor(TracingProcessor):
+    """Translate completed OpenAI Agents spans into Maida recorders.
 
     When a guardrail fires, the processor raises ``_MaidaAbortSignal``
     (a ``BaseException``) so it bypasses the SDK's ``except Exception``
@@ -142,7 +142,7 @@ class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
         span_data = getattr(span, "span_data", None)
         span_error = getattr(span, "error", None)
         status = _status_from_span_error(span_error)
-        error = _span_error_to_agentdbg_error(span_error)
+        error = _span_error_to_maida_error(span_error)
 
         try:
             if isinstance(span_data, GenerationSpanData):
@@ -200,13 +200,13 @@ class AgentDbgOpenAIAgentsTracingProcessor(TracingProcessor):
         return None
 
 
-def _register_processor() -> AgentDbgOpenAIAgentsTracingProcessor:
+def _register_processor() -> OpenAIAgentsTracingProcessor:
     """Register the adapter once per process, even across module reloads."""
     existing = getattr(agents_tracing, _PROCESSOR_ATTR, None)
     if existing is not None:
         return existing
 
-    processor = AgentDbgOpenAIAgentsTracingProcessor()
+    processor = OpenAIAgentsTracingProcessor()
     add_trace_processor(processor)
     setattr(agents_tracing, _PROCESSOR_ATTR, processor)
     return processor
@@ -214,4 +214,4 @@ def _register_processor() -> AgentDbgOpenAIAgentsTracingProcessor:
 
 PROCESSOR = _register_processor()
 
-__all__ = ["AgentDbgOpenAIAgentsTracingProcessor", "PROCESSOR"]
+__all__ = ["OpenAIAgentsTracingProcessor", "PROCESSOR"]

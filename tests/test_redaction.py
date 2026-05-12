@@ -1,6 +1,6 @@
 """
 Tests for redaction: sensitive keys in payloads are replaced with __REDACTED__.
-Uses AGENTDBG_REDACT_KEYS and temp dir via AGENTDBG_DATA_DIR.
+Uses MAIDA_REDACT_KEYS and temp dir via MAIDA_DATA_DIR.
 """
 
 import os
@@ -11,7 +11,7 @@ import pytest
 from pathlib import Path
 
 from maida.constants import REDACTED_MARKER, TRUNCATED_MARKER
-from maida.config import load_config, AgentDbgConfig
+from maida.config import load_config, MaidaConfig
 from maida.guardrails import GuardrailParams
 from maida.events import EventType
 from maida._tracing._redact import _redact_and_truncate
@@ -26,9 +26,9 @@ def test_redaction_constants_unchanged():
 
 
 def test_max_field_truncation():
-    """Strings over AGENTDBG_MAX_FIELD_BYTES are truncated and suffixed with __TRUNCATED__."""
+    """Strings over MAIDA_MAX_FIELD_BYTES are truncated and suffixed with __TRUNCATED__."""
     max_bytes = 100
-    cfg = AgentDbgConfig(
+    cfg = MaidaConfig(
         redact=True,
         redact_keys=["token"],
         max_field_bytes=max_bytes,
@@ -56,30 +56,30 @@ def test_max_field_truncation():
 
 @pytest.fixture
 def redact_token_env():
-    """Set AGENTDBG_REDACT_KEYS=token for the test."""
-    old = os.environ.get("AGENTDBG_REDACT_KEYS")
+    """Set MAIDA_REDACT_KEYS=token for the test."""
+    old = os.environ.get("MAIDA_REDACT_KEYS")
     try:
-        os.environ["AGENTDBG_REDACT_KEYS"] = "token"
+        os.environ["MAIDA_REDACT_KEYS"] = "token"
         yield
     finally:
         if old is not None:
-            os.environ["AGENTDBG_REDACT_KEYS"] = old
-        elif "AGENTDBG_REDACT_KEYS" in os.environ:
-            os.environ.pop("AGENTDBG_REDACT_KEYS")
+            os.environ["MAIDA_REDACT_KEYS"] = old
+        elif "MAIDA_REDACT_KEYS" in os.environ:
+            os.environ.pop("MAIDA_REDACT_KEYS")
 
 
 @pytest.fixture
 def redact_message_and_stack_env():
-    """Set AGENTDBG_REDACT_KEYS=message,stack so ERROR payload message/stack are redacted."""
-    old = os.environ.get("AGENTDBG_REDACT_KEYS")
+    """Set MAIDA_REDACT_KEYS=message,stack so ERROR payload message/stack are redacted."""
+    old = os.environ.get("MAIDA_REDACT_KEYS")
     try:
-        os.environ["AGENTDBG_REDACT_KEYS"] = "message,stack"
+        os.environ["MAIDA_REDACT_KEYS"] = "message,stack"
         yield
     finally:
         if old is not None:
-            os.environ["AGENTDBG_REDACT_KEYS"] = old
-        elif "AGENTDBG_REDACT_KEYS" in os.environ:
-            os.environ.pop("AGENTDBG_REDACT_KEYS")
+            os.environ["MAIDA_REDACT_KEYS"] = old
+        elif "MAIDA_REDACT_KEYS" in os.environ:
+            os.environ.pop("MAIDA_REDACT_KEYS")
 
 
 def test_record_tool_call_redacts_args_with_token_key(temp_data_dir, redact_token_env):
@@ -181,9 +181,9 @@ def test_run_start_argv_redacted(temp_data_dir):
     assert argv == ["test_script.py", f"--api-key={REDACTED_MARKER}", "--verbose"]
 
 
-def _redact_cfg(keys: list[str]) -> AgentDbgConfig:
+def _redact_cfg(keys: list[str]) -> MaidaConfig:
     """Minimal config with redaction enabled and given redact_keys."""
-    return AgentDbgConfig(
+    return MaidaConfig(
         redact=True,
         redact_keys=keys,
         max_field_bytes=1000,

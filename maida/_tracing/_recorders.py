@@ -5,7 +5,7 @@ Depends: maida.events, maida.storage, maida.loopdetect, _redact, _context.
 
 from typing import Any
 
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.events import EventType, new_event
 from maida.exceptions import LoopAbort
 from maida.loopdetect import detect_loop, pattern_key as loop_pattern_key
@@ -25,7 +25,7 @@ from maida._tracing._redact import (
 def _maybe_emit_loop_warning(
     run_id: str,
     counts: dict[str, int],
-    config: AgentDbgConfig,
+    config: MaidaConfig,
     window: list[dict],
     emitted: set[str],
 ) -> None:
@@ -86,7 +86,7 @@ def record_llm_call(
     error: str | BaseException | dict[str, Any] | None = None,
 ) -> None:
     """
-    Record an LLM call event. No-op if no active run (unless AGENTDBG_IMPLICIT_RUN=1).
+    Record an LLM call event. No-op if no active run (unless MAIDA_IMPLICIT_RUN=1).
     Applies redaction and truncation from config, appends event, increments llm_calls.
     When status is "error", error may be an exception, string, or dict (type, message, details?, stack?).
     """
@@ -128,7 +128,7 @@ def record_tool_call(
     error: str | BaseException | dict[str, Any] | None = None,
 ) -> None:
     """
-    Record a tool call event. No-op if no active run (unless AGENTDBG_IMPLICIT_RUN=1).
+    Record a tool call event. No-op if no active run (unless MAIDA_IMPLICIT_RUN=1).
     Applies redaction and truncation, appends event, increments tool_calls.
     When status is "error", error may be an exception, string, or dict (type, message, details?, stack?).
     """
@@ -163,7 +163,7 @@ def record_state(
     diff: Any = None,
 ) -> None:
     """
-    Record a state update event. No-op if no active run (unless AGENTDBG_IMPLICIT_RUN=1).
+    Record a state update event. No-op if no active run (unless MAIDA_IMPLICIT_RUN=1).
     Applies redaction and truncation; does not increment any count.
     """
     ctx = _ensure_run()

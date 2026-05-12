@@ -1,5 +1,5 @@
 """
-Local storage for AgentDbg runs: run metadata (run.json) and append-only events (events.jsonl).
+Local storage for Maida runs: run metadata (run.json) and append-only events (events.jsonl).
 
 ~/.maida/runs/<run_id>/ with required run.json and events.jsonl.
 Uses config.data_dir (default ~/.maida). Stdlib only.
@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from maida.config import AgentDbgConfig
+from maida.config import MaidaConfig
 from maida.constants import SPEC_VERSION, default_counts
 from maida.events import utc_now_iso_ms_z
 
@@ -53,12 +53,12 @@ def validate_run_id_format(run_id: str) -> str:
     return run_id
 
 
-def _runs_dir(config: AgentDbgConfig) -> Path:
+def _runs_dir(config: MaidaConfig) -> Path:
     """Return the runs base directory: <data_dir>/runs."""
     return config.data_dir.expanduser() / "runs"
 
 
-def _run_dir(run_id: str, config: AgentDbgConfig) -> Path:
+def _run_dir(run_id: str, config: MaidaConfig) -> Path:
     """
     Return the run directory: <data_dir>/runs/<run_id>/.
     Validates run_id format and ensures resolved path is under runs base (defense-in-depth).
@@ -76,17 +76,17 @@ def _run_dir(run_id: str, config: AgentDbgConfig) -> Path:
     return path
 
 
-def _run_json_path(run_id: str, config: AgentDbgConfig) -> Path:
+def _run_json_path(run_id: str, config: MaidaConfig) -> Path:
     """Path to run.json for the given run_id."""
     return _run_dir(run_id, config) / RUN_JSON
 
 
-def _events_path(run_id: str, config: AgentDbgConfig) -> Path:
+def _events_path(run_id: str, config: MaidaConfig) -> Path:
     """Path to events.jsonl for the given run_id."""
     return _run_dir(run_id, config) / EVENTS_JSONL
 
 
-def create_run(run_name: str | None, config: AgentDbgConfig) -> dict:
+def create_run(run_name: str | None, config: MaidaConfig) -> dict:
     """
     Create a new run: generate run_id, create run dir, write initial run.json (status=running).
 
@@ -122,7 +122,7 @@ def create_run(run_name: str | None, config: AgentDbgConfig) -> dict:
     }
 
 
-def append_event(run_id: str, event: dict, config: AgentDbgConfig) -> None:
+def append_event(run_id: str, event: dict, config: MaidaConfig) -> None:
     """
     Append one event as a single JSON line to events.jsonl and flush.
 
@@ -139,7 +139,7 @@ def finalize_run(
     run_id: str,
     status: str,
     counts: dict,
-    config: AgentDbgConfig,
+    config: MaidaConfig,
 ) -> None:
     """
     Update run.json with ended_at, duration_ms, status, and counts.
@@ -195,7 +195,7 @@ def _atomic_write_json(path: Path, data: dict) -> None:
         raise
 
 
-def resolve_run_id(prefix: str, config: AgentDbgConfig) -> str:
+def resolve_run_id(prefix: str, config: MaidaConfig) -> str:
     """
     Resolve a run_id prefix (e.g. short "33be9ab2") to the full run_id (UUID).
     If prefix already matches a run directory name exactly, returns it.
@@ -246,7 +246,7 @@ def resolve_run_id(prefix: str, config: AgentDbgConfig) -> str:
     return candidates[0][1]
 
 
-def load_run_meta(run_id: str, config: AgentDbgConfig) -> dict:
+def load_run_meta(run_id: str, config: MaidaConfig) -> dict:
     """
     Load run metadata from run.json. Raises FileNotFoundError if run or run.json missing.
     """
@@ -272,7 +272,7 @@ def _parse_iso8601_utc(s: str) -> datetime | None:
         return None
 
 
-def list_runs(limit: int, config: AgentDbgConfig) -> list[dict]:
+def list_runs(limit: int, config: MaidaConfig) -> list[dict]:
     """
     List most recent runs by started_at descending. Does not parse events.jsonl.
 
@@ -309,7 +309,7 @@ def list_runs(limit: int, config: AgentDbgConfig) -> list[dict]:
     return [meta for _, meta in candidates[:limit]]
 
 
-def load_events(run_id: str, config: AgentDbgConfig) -> list[dict]:
+def load_events(run_id: str, config: MaidaConfig) -> list[dict]:
     """
     Read events.jsonl for the run and return a list of event dicts.
 
@@ -337,7 +337,7 @@ def load_events(run_id: str, config: AgentDbgConfig) -> list[dict]:
     return events
 
 
-def get_run_paths(run_id: str, config: AgentDbgConfig) -> dict:
+def get_run_paths(run_id: str, config: MaidaConfig) -> dict:
     """
     Return local filesystem paths for a run.
 
@@ -356,7 +356,7 @@ def get_run_paths(run_id: str, config: AgentDbgConfig) -> dict:
     }
 
 
-def rename_run(run_id: str, run_name: str, config: AgentDbgConfig) -> dict:
+def rename_run(run_id: str, run_name: str, config: MaidaConfig) -> dict:
     """
     Update run.json run_name and return updated metadata.
 
@@ -377,7 +377,7 @@ def rename_run(run_id: str, run_name: str, config: AgentDbgConfig) -> dict:
     return meta
 
 
-def delete_run(run_id: str, config: AgentDbgConfig) -> None:
+def delete_run(run_id: str, config: MaidaConfig) -> None:
     """
     Delete a run directory and all its contents.
 

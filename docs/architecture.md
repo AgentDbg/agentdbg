@@ -39,7 +39,7 @@ Events are written as one JSON object per line (JSONL) and flushed after each wr
 
 ## Storage layout
 
-- **Base directory:** `~/.maida/` (or `AGENTDBG_DATA_DIR`).
+- **Base directory:** `~/.maida/` (or `MAIDA_DATA_DIR`).
 - **Per run:** `runs/<run_id>/`
   - **run.json** - Run metadata: `run_id`, `run_name`, `started_at`, `ended_at`, `duration_ms`, `status`, `counts` (llm_calls, tool_calls, errors, loop_warnings), `last_event_ts`.
   - **events.jsonl** - Append-only; one event per line.
@@ -84,7 +84,7 @@ Guardrails are opt-in limits that stop a run before it burns more time, tokens, 
 **Behavior when a guardrail triggers:**
 
 1. The triggering event is recorded using existing event types (no new types)
-2. `AgentDbgLoopAbort` or `AgentDbgGuardrailExceeded` is raised
+2. `LoopAbort` or `GuardrailExceeded` is raised
 3. `ERROR` event is recorded (payload includes `guardrail`, `threshold`, `actual`)
 4. `RUN_END(status="error")` finalizes the run
 5. The exception propagates to the caller
@@ -97,7 +97,7 @@ See [Guardrails](guardrails.md) for usage examples, [Configuration reference](re
 
 ## Live-refresh viewer
 
-The UI supports automatic polling so you can start `agentdbg view` once and re-run your agent without manually refreshing.
+The UI supports automatic polling so you can start `maida view` once and re-run your agent without manually refreshing.
 
 - **Run list sidebar:** polls `GET /api/runs` every 3 seconds (configurable via `poll_runs` URL param, 1–60s). New runs appear automatically; removed runs are cleared from the sidebar.
 - **Event timeline:** when the current run has `status: "running"`, events poll every 2 seconds (configurable via `poll_events` URL param, 1–60s). Polling stops when the run finishes.
@@ -116,9 +116,9 @@ Maida adapters are thin translation layers that hook into a framework's callback
 | OpenAI Agents SDK | `maida.integrations.openai_agents` | Tracing processor (`GenerationSpanData`, `FunctionSpanData`, `HandoffSpanData`) |
 | CrewAI | `maida.integrations.crewai` | Execution hooks (`before/after_llm_call`, `before/after_tool_call`) |
 
-**Integration lifecycle:** `maida._integration_utils` provides `_invoke_run_enter` / `_invoke_run_exit` callbacks that adapters register with. This ensures adapters activate only when an explicit AgentDbg run is active.
+**Integration lifecycle:** `maida._integration_utils` provides `_invoke_run_enter` / `_invoke_run_exit` callbacks that adapters register with. This ensures adapters activate only when an explicit Maida run is active.
 
-**Guardrails with integrations:** when a guardrail fires inside a framework callback, adapters raise `_AgentDbgAbortSignal` (a `BaseException` subclass) to bypass the framework's `except Exception` error handling and stop execution immediately.
+**Guardrails with integrations:** when a guardrail fires inside a framework callback, adapters raise `_MaidaAbortSignal` (a `BaseException` subclass) to bypass the framework's `except Exception` error handling and stop execution immediately.
 
 All integrations are optional dependencies; the core package does not depend on any framework. See [Integrations](integrations.md) for usage details.
 
@@ -126,9 +126,9 @@ All integrations are optional dependencies; the core package does not depend on 
 
 ## Loop detection
 
-- **Input:** A sliding window of the last N events (default N=12; `AGENTDBG_LOOP_WINDOW`).
+- **Input:** A sliding window of the last N events (default N=12; `MAIDA_LOOP_WINDOW`).
 - **Signature:** Each event is reduced to a string: for `LLM_CALL` -> `"LLM_CALL:"+model`, for `TOOL_CALL` -> `"TOOL_CALL:"+tool_name`, else `event_type`.
-- **Rule:** Look for a contiguous block of signatures that repeats K times (default K=3; `AGENTDBG_LOOP_REPETITIONS`) at the end of the window. If found, emit one `LOOP_WARNING` per distinct pattern per run (deduplicated by pattern + repetitions).
+- **Rule:** Look for a contiguous block of signatures that repeats K times (default K=3; `MAIDA_LOOP_REPETITIONS`) at the end of the window. If found, emit one `LOOP_WARNING` per distinct pattern per run (deduplicated by pattern + repetitions).
 - **Payload:** `pattern` (e.g. "LLM_CALL:gpt-4 -> TOOL_CALL:search"), `repetitions`, `window_size`, `evidence_event_ids`.
 
 No ML; purely pattern-based on event type and name to give quick feedback on repetitive agent behavior.

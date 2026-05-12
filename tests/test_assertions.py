@@ -333,5 +333,5 @@ def test_format_report_markdown_table(temp_data_dir):
     policy = AssertionPolicy(max_steps=100)
     report = run_assertions(run_id, policy, config=config)
     md = format_report_markdown(report)
-    assert "AgentDbg Regression Report" in md
+    assert "Maida Assertion Report" in md
     assert "| Check |" in md
