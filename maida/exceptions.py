@@ -83,15 +83,11 @@ class LoopAbort(GuardrailExceeded):
 # Backward compatibility (deprecated names; warn on direct use only)
 
 
-_DEPR_USE_INSTEAD = (
-    "This exception alias is deprecated and will be removed in a future version."
-)
-
-
 def _make_depricated_class(name: str, bases: tuple[type, ...]) -> type:
     @deprecated(
-        f"{_DEPR_USE_INSTEAD} Use '{name}' instead.",
-        stacklevel=2,
+        f"'{name}'is deprecated and will be removed in a future version. "
+        f"Use '{bases[0].__name__}' instead.",
+        stacklevel=4,
     )
     class DeprecatedClass(bases[0], *bases[1:]):
         f"""Deprecated class for :class:`{name}`."""
