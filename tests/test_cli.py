@@ -341,7 +341,7 @@ def test_assert_markdown_format(empty_data_dir):
         app, ["assert", run_id, "--max-steps", "10", "--format", "markdown"]
     )
     assert result.exit_code == 0
-    assert "AgentDbg Regression Report" in result.output
+    assert "Maida Assertion Report" in result.output
 
 
 def test_assert_with_baseline(empty_data_dir):
