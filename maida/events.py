@@ -1,5 +1,5 @@
 """
-Event types and factory for AgentDebugger trace events.
+Event types and factory for Maida trace events.
 
 All events are JSON-serializable dicts.
 Pure functions, stdlib only, unit-testable.
