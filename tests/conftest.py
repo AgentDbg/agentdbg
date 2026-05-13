@@ -1,5 +1,5 @@
 """
-Shared pytest fixtures and helpers for AgentDbg tests.
+Shared pytest fixtures and helpers for Maida tests.
 """
 
 import os

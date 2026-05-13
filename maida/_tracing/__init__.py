@@ -1,5 +1,5 @@
 """
-Tracing context, @trace decorator, and manual recorders for AgentDbg.
+Tracing context, @trace decorator, and manual recorders for Maida.
 
 Uses contextvars for run_id, counts, and config. Recorders no-op when no active run,
 or create an implicit run when MAIDA_IMPLICIT_RUN=1.

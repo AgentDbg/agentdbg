@@ -40,7 +40,7 @@ def run_agent():
 
 - When the function is called **and no run is active:** creates a new run, emits `RUN_START`, runs the function, then emits `RUN_END`. On exception, emits `ERROR` then `RUN_END` with status `error` and re-raises.
 - When called **inside an already active run:** runs the function without creating a new run or extra run events. All `record_*` calls inside still attach to the outer run.
-- When a guardrail is enabled and crossed: records the triggering event, raises `AgentDbgLoopAbort` or `AgentDbgGuardrailExceeded`, records `ERROR`, records `RUN_END(status="error")`, and re-raises.
+- When a guardrail is enabled and crossed: records the triggering event, raises `LoopAbort` or `GuardrailExceeded`, records `ERROR`, records `RUN_END(status="error")`, and re-raises.
 
 **Parameters:**
 

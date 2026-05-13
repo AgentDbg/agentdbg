@@ -1,5 +1,5 @@
 """
-Tracing context, @trace decorator, and manual recorders for AgentDbg.
+Tracing context, @trace decorator, and manual recorders for Maida.
 
 Re-export shim: public API lives in maida._tracing.
 """
