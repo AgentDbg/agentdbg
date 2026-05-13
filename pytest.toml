@@ -1,5 +1,5 @@
 [pytest]
-addopts = ["-ra"]
+addopts = ["-ra", "-n", "auto"]
 strict_markers = true
 markers = [
   "slow: slower tests (excluded from fast CI)",
