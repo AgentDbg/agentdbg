@@ -8,7 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.10"
-  UV_VERSION: "0.10.2"
+  UV_VERSION: "0.11.14"
   APP_HOST: "127.0.0.1"
   APP_PORT: "8712"
 

@@ -16,7 +16,7 @@ on:
       - tests/**
 
 env:
-  UV_VERSION: "0.10.2"
+  UV_VERSION: "0.11.14"
 
 jobs:
   unittest-fast:
