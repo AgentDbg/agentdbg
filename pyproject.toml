@@ -1,5 +1,5 @@
 [project]
-name = "maida"
+name = "maida-ai"
 dynamic = ["version"]
 description = "Don't let broken changes merge."
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -62,6 +62,9 @@ openai = [
 requires = ["hatchling>=1.28.0,<1.29.0", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["maida"]
+
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
 
@@ -69,17 +72,6 @@ source = "uv-dynamic-versioning"
 enable = true
 vcs = "git"
 pattern = "default-unprefixed"
-# from-file = { source = "maida/_version.py", pattern = "version = \"(?P<base>\\d+\\.\\d+\\.\\d+)\"" }
-# TODO: Condition the version on the branch (s.a. release=>stable, main=>dev)
-format-jinja = """
-    {%- if distance == 0 -%}
-        {{ serialize_pep440(base, stage, revision) }}
-    {%- elif revision is not none -%}
-        {{ serialize_pep440(base, stage, revision + 1, dev=distance) }}
-    {%- else -%}
-        {{ serialize_pep440(bump_version(base), stage, revision, dev=distance) }}
-    {%- endif -%}
-"""
 
 [tool.hatch.build.hooks.version]
 path = "maida/_version.py"
