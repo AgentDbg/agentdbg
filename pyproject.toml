@@ -1,7 +1,7 @@
 [project]
 name = "agentdbg"
 dynamic = ["version"]
-description = "Local-first debugger for AI agents (traces, timeline UI, loop warnings)."
+description = "Deprecated: AgentDbg has been renamed to Maida. Use maida-ai instead."
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "Apache-2.0"
 license-files = [ "LICENSE" ]
@@ -10,26 +10,21 @@ authors = [
 ]
 requires-python = ">=3.10,<3.14"
 dependencies = [
+    "maida-ai>=0.3.0",
     "fastapi>=0.135.0,<0.136.0",
     "pyyaml>=6.0.3,<6.1.0",
     "typer>=0.23.0,<0.24.0",
     "uvicorn>=0.41.0,<0.42.0",
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
-
-  "Intended Audience :: Developers",
-  "Topic :: Software Development :: Debuggers",
-
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+    "Development Status :: 7 - Inactive",
+    "Programming Language :: Python :: 3",
 ]
 
 [project.urls]
-Repository = "https://github.com/AgentDbg/AgentDbg"
+Repository = "https://github.com/maida-ai/maida"
+Homepage = "https://maida.ai"
+Documentation = "https://maida.ai/docs"
 
 [project.scripts]
 agentdbg = "agentdbg.cli:main"

@@ -12,6 +12,7 @@ name = "agentdbg"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "maida-ai" },
     { name = "pyyaml" },
     { name = "typer" },
     { name = "uvicorn" },
@@ -44,6 +45,7 @@ requires-dist = [
     { name = "crewai", extras = ["tools"], marker = "extra == 'crewai'", specifier = ">=1.6.1" },
     { name = "fastapi", specifier = ">=0.135.0,<0.136.0" },
     { name = "langchain", marker = "extra == 'langchain'", specifier = ">=1.2.10" },
+    { name = "maida-ai", specifier = ">=0.3.0" },
     { name = "onnxruntime", marker = "python_full_version >= '3.11' and python_full_version < '3.14' and extra == 'crewai'", specifier = ">=1.23.0" },
     { name = "onnxruntime", marker = "python_full_version < '3.11' and extra == 'crewai'", specifier = ">=1.22.1,<1.23.0" },
     { name = "openai-agents", marker = "extra == 'openai'", specifier = ">=0.12.2" },
@@ -1688,6 +1690,21 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/c1/27428a2ff348e994ab4f8777d3a0ad510b6b92d37718e5887d2da99952a2/lxml-6.0.2-pp311-pypy311_pp73-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:60fa43be34f78bebb27812ed90f1925ec99560b0fa1decdb7d12b84d857d31e9", size = 4272119, upload-time = "2025-09-22T04:04:51.801Z" },
     { url = "https://files.pythonhosted.org/packages/f0/d0/3020fa12bcec4ab62f97aab026d57c2f0cfd480a558758d9ca233bb6a79d/lxml-6.0.2-pp311-pypy311_pp73-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:21c73b476d3cfe836be731225ec3421fa2f048d84f6df6a8e70433dff1376d5a", size = 4417314, upload-time = "2025-09-22T04:04:55.024Z" },
     { url = "https://files.pythonhosted.org/packages/6c/77/d7f491cbc05303ac6801651aabeb262d43f319288c1ea96c66b1d2692ff3/lxml-6.0.2-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:27220da5be049e936c3aca06f174e8827ca6445a4353a1995584311487fc4e3e", size = 3518768, upload-time = "2025-09-22T04:04:57.097Z" },
+]
+
+[[package]]
+name = "maida-ai"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "pyyaml" },
+    { name = "typer" },
+    { name = "uvicorn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/40/f5/195295846bfc86689cdeb3c6b409b9b39af55f191c23972dbc8179130127/maida_ai-0.3.2.tar.gz", hash = "sha256:1b410ab8b556cebe12d62cc86d2bf5e442d4ebad6ec3e89818536ec94b37b077", size = 8891157, upload-time = "2026-05-15T18:00:54.398Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/29/d0/fa5926df6acb111fc6295c80e32cebd699b24950ff80a169ab7145ea6a85/maida_ai-0.3.2-py3-none-any.whl", hash = "sha256:bef8e3c6a8dc352be4df5a1fd5d67cec1269d94d6470d6a67033cac83ce6ed2c", size = 74416, upload-time = "2026-05-15T18:00:52.79Z" },
 ]
 
 [[package]]

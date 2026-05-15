@@ -1,4 +1,4 @@
-# AgentDbg
+# AgentDbg has moved to Maida
 
 **The step-through debugger for AI agents.**
 
@@ -6,6 +6,24 @@
 [![PyPI version](https://img.shields.io/pypi/v/agentdbg.svg)](https://pypi.org/project/agentdbg/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/agentdbg)
 
+
+`agentdbg` has been renamed to `maida`.
+
+Please install the new package:
+
+```bash
+pip install maida-ai
+```
+
+New usage:
+
+```python
+from maida import trace
+```
+
+The old `agentdbg` package is kept only as a compatibility shim and will not receive new features.
+
+---
 
 
 

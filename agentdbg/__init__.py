@@ -10,6 +10,15 @@ from agentdbg.tracing import (
     traced_run,
 )
 
+import warnings
+
+warnings.warn(
+    "agentdbg has been renamed to maida. "
+    "Install `maida-ai` and use `from maida import ...` instead.",
+    FutureWarning,
+    stacklevel=2,
+)
+
 try:
     from agentdbg._version import version as __version__
 except ImportError:
